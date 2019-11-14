@@ -14,11 +14,10 @@ class PeekIter:
         else:
             return next(self.iter)
 
-    def peek(self):
-        if len(self.peeked_list) > 0:
-            return self.peeked_list[len(self.peeked_list) - 1]
-        self.peeked_list.append(next(self.iter))
-        return self.peeked_list[len(self.peeked_list) - 1]
+    def peek(self, offset=0):
+        while not len(self.peeked_list) > offset:  
+            self.peeked_list.append(next(self.iter))
+        return self.peeked_list[offset]
 
     def __iter__(self):
         return self

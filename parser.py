@@ -17,7 +17,8 @@ class ParseNode:
             for child in self.children:
                 if child is None:
                     print("%s\tNone", pre)
-                child.display(pre_num + 1)
+                else:
+                    child.display(pre_num + 1)
             print("%s}" % (pre))
 
 
@@ -58,6 +59,7 @@ def check_identifier(token):
 def check_raw_type(token):
     return token.data in ["char", "short", "int", "void"]
 
+
 def parse_identifier(tokens):
     if check_identifier(tokens.peek()):
         return ParseNode(next(tokens).data, [])
@@ -88,6 +90,7 @@ def parse_type(tokens):
 
 def parse_argument(tokens):
     return ParseNode("Argument", [parse_type(tokens), parse_identifier(tokens)])
+
 
 def parse_struct_def(tokens):
     magic = next(tokens)
@@ -121,8 +124,177 @@ def parse_struct_def(tokens):
 
     return ParseNode("StructDef", children)
 
+
+def parse_expression(tokens):
+    if check_identifier(tokens.peek()):
+        return parse_identifier(tokens)
+
+    elif check_integer(tokens.peek()):
+        return ParseNode(next(tokens).data)
+
+    return ParseNode("ERROR", next(tokens).data)
+
+
+def parse_statement(tokens):
+    if tokens.peek().data == ";":
+        next(tokens)
+        return ParseNode("NOP", [])
+    elif tokens.peek().data == "{":
+        next(tokens)
+
+        children = []
+
+        while tokens.peek().data != "}":
+            children.append(parse_statement(tokens))
+
+        next(tokens)
+
+        return ParseNode("Compound", children)
+    elif tokens.peek().data == "return":
+        next(tokens)
+
+        children = [parse_expression(tokens)]
+
+        if not tokens.peek().data == ";":
+            report_parse_error("Expected ';' token", next(tokens))
+        else:
+            next(tokens)
+
+        return ParseNode("Return", children)
+    elif tokens.peek().data == "while":
+        next(tokens)
+
+        children = []
+
+        if not tokens.peek().data == "(":
+            report_parse_error("Expected '(' token", next(tokens))
+        else:
+            next(tokens)
+
+        children.append(parse_expression(tokens))
+
+        if not tokens.peek().data == ")":
+            report_parse_error("Expected ')' token", next(tokens))
+        else:
+            next(tokens)
+
+        children.append(parse_statement(tokens))
+
+        return ParseNode("While", children)
+    elif tokens.peek().data == "if":
+        next(tokens)
+
+        children = []
+
+        if not tokens.peek().data == "(":
+            report_parse_error("Expected '(' token", next(tokens))
+        else:
+            next(tokens)
+
+        children.append(parse_expression(tokens))
+
+        if not tokens.peek().data == ")":
+            report_parse_error("Expected ')' token", next(tokens))
+        else:
+            next(tokens)
+
+        children.append(parse_statement(tokens))
+
+        while tokens.peek().data == "else":
+            next(tokens)
+
+            statement = "Else"
+
+            sub_children = []
+
+            if tokens.peek().data == "if":
+                next(tokens)
+                statement += "If"
+
+                if not tokens.peek().data == "(":
+                    report_parse_error("Expected '(' token", next(tokens))
+                else:
+                    next(tokens)
+
+                sub_children.append(parse_expression(tokens))
+
+                if not tokens.peek().data == ")":
+                    report_parse_error("Expected ')' token", next(tokens))
+                else:
+                    next(tokens)
+
+            print(tokens.peek().data)
+
+            sub_children.append(parse_statement(tokens))
+
+            children.append(ParseNode(statement, sub_children))
+
+            if statement == "Else":
+                break
+
+        return ParseNode("If", children)
+    elif tokens.peek().data == "for":
+        next(tokens)
+
+        children = []
+
+        if not tokens.peek().data == "(":
+            report_parse_error("Expected '(' token", next(tokens))
+        else:
+            next(tokens)
+
+        children.append(parse_expression(tokens))
+
+        if not tokens.peek().data == ";":
+            report_parse_error("Expected ';' token", next(tokens))
+        else:
+            next(tokens)
+
+        children.append(parse_expression(tokens))
+
+        if not tokens.peek().data == ";":
+            report_parse_error("Expected ';' token", next(tokens))
+        else:
+            next(tokens)
+
+        children.append(parse_expression(tokens))
+
+        if not tokens.peek().data == ")":
+            report_parse_error("Expected ')' token", next(tokens))
+        else:
+            next(tokens)
+
+        children.append(parse_statement(tokens))
+
+        return ParseNode("For", children)
+    else:
+        return ParseNode("ExprCommand", [parse_expression(tokens)])
+
 def parse_function_def(tokens):
-    return None
+    children = [parse_type(tokens), parse_identifier(tokens)]
+
+    if not tokens.peek().data == "(":
+        report_parse_error("Expected '(' token", next(tokens))
+    else:
+        next(tokens)
+
+    while not tokens.peek().data == ")":
+        children.append(parse_argument(tokens))
+
+        if tokens.peek().data == ",":
+            next(tokens)
+        else:
+            break
+
+    if not tokens.peek().data == ")":
+        report_parse_error("Expected ')' token", next(tokens))
+    else:
+        next(tokens)
+
+    children.append(parse_statement(tokens))
+
+    return ParseNode("Function", children)
+
 
 def parse_typedef(tokens):
     children = []
@@ -139,6 +311,7 @@ def parse_typedef(tokens):
         next(tokens)
 
     return ParseNode("TypeDef", children)
+
 
 def parse_file(tokens):
     children = []
@@ -159,7 +332,10 @@ def parse_file(tokens):
 
     return ParseNode("File", children)
 
+
 def parse(tokens):
+    for t in tokens:
+        print(t)
     peekable = PeekIter(tokens)
 
     return parse_file(peekable)

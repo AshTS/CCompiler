@@ -1,5 +1,10 @@
+int main()
+{
+    int i = int a = 2;
+    return 0;
+}
 
-
+/*
 struct LinkedList
 {
     int value;
@@ -8,8 +13,9 @@ struct LinkedList
 
 typedef struct LinkedList LinkedList;
 
-/*
+
 void append(LinkedList* list, LinkedList* val)
+
 {
     if (list->next == NULL)
     {
