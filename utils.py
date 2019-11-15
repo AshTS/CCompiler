@@ -7,8 +7,8 @@ class PeekIter:
 
     def __next__(self):
         if len(self.peeked_list) > 0:
-            value = self.peeked_list[len(self.peeked_list) - 1]
-            self.peeked_list = self.peeked_list[:-1]
+            value = self.peeked_list[0]
+            self.peeked_list = self.peeked_list[1:]
 
             return value
         else:
