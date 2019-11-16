@@ -1,9 +1,4 @@
-int add(int a, int b)
-{
-    return (a += b, a);
-}
-
-/*struct LinkedList
+struct LinkedList
 {
     int value;
     struct LinkedList* next;
@@ -46,4 +41,4 @@ int main(int argc, char** argv)
     traverse(&list);
 
     return 0;
-}*/
+}

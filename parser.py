@@ -151,6 +151,9 @@ def parse_expression(tokens, level=15, add=0):
         elif check_integer(tokens.peek()):
             return ParseNode(next(tokens).data)
 
+        elif check_string(tokens.peek()):
+            return ParseNode("String", [ParseNode(next(tokens).data)])
+
         elif tokens.peek().data == "(":
             next(tokens)
 
@@ -180,7 +183,7 @@ def parse_expression(tokens, level=15, add=0):
             children = [result]
 
             while tokens.peek().data != ")":
-                children.append(parse_expression(tokens))
+                children.append(parse_expression(tokens, add=-1))
 
                 if tokens.peek().data == ",":
                     next(tokens)
@@ -237,7 +240,6 @@ def parse_expression(tokens, level=15, add=0):
             return ParseNode("BitwiseNot", [parse_expression(tokens, level)])
         elif tokens.peek().data == "(" and tokens.peek(1).data in defines.type_starting_identifiers:
             next(tokens)
-            print(tokens.peek().data)
             children = [parse_type(tokens)]
 
             if not tokens.peek().data == ")":
@@ -532,8 +534,6 @@ def parse_statement(tokens):
                 else:
                     next(tokens)
 
-            print(tokens.peek().data)
-
             sub_children.append(parse_statement(tokens))
 
             children.append(ParseNode(statement, sub_children))
@@ -661,8 +661,6 @@ def parse_file(tokens):
 
 
 def parse(tokens):
-    for t in tokens:
-        print(t)
     peekable = PeekIter(tokens)
 
     return parse_file(peekable)
