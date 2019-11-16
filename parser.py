@@ -1,10 +1,20 @@
 from utils import PeekIter
 import defines
 
-def report_parse_error(error, tokens):
-    token = tokens.peek()
+TERMINATE_ON_ERROR = False
 
-    print("Parse Error %s on line %i, col %i" % (error, token.line, token.col))
+def report_parse_error(error, tokens=None, token=None):
+    if token is None:
+        token = tokens.peek()
+
+    line = token.line
+    col = token.col + 1
+    file_name = token.file
+
+    print("Parse Error %s on line %i, col %i in file %s" % (error, line, col, file_name))
+
+    if TERMINATE_ON_ERROR:
+        raise Exception()
 
 
 class ParseNode:
@@ -215,16 +225,19 @@ def parse_expression(context, level=15, add=0):
                 next(context.tokens)
 
             return result
+        
+        print(context.tokens.peek())
 
         report_parse_error("Expected Expression", context.tokens)
 
     elif level == 1:    # a++, a--, a(), a[], a., a->
         identifier = check_identifier(context.tokens.peek())
+        result_token = context.tokens.peek()
         result = parse_expression(context, level - 1)
 
         if context.tokens.peek().data == "(" and identifier:
             if not context.check_func(result.data):
-                report_parse_error("Undefined Function Identifier '%s'" % result.data, context.tokens)
+                report_parse_error("Undefined Function Identifier '%s'" % result.data, context.tokens, result_token)
 
             next(context.tokens)
 
@@ -246,8 +259,8 @@ def parse_expression(context, level=15, add=0):
             return ParseNode("FuncCall", children)
 
         if identifier and not context.check_var(result.data):
-                report_parse_error("Undefined Variable Identifier '%s'" % result.data, context.tokens)
-        
+                report_parse_error("Undefined Variable Identifier '%s'" % result.data, context.tokens, result_token)
+
         if context.tokens.peek().data == "++":
             next(context.tokens)
             return ParseNode("PostInc", [result])

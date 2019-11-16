@@ -1,8 +1,6 @@
 class PeekIter:
     def __init__(self, data):
         self.iter = iter(data)
-        self.ptr = 0
-
         self.peeked_list = []
 
     def __next__(self):
@@ -17,6 +15,7 @@ class PeekIter:
     def peek(self, offset=0):
         while not len(self.peeked_list) > offset:  
             self.peeked_list.append(next(self.iter))
+        
         return self.peeked_list[offset]
 
     def __iter__(self):

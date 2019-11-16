@@ -1,3 +1,12 @@
+#define VAL 0
+
+int main()
+{
+    return VAL;
+}
+
+/*#include "stdio.h"
+
 struct LinkedList
 {
     int value;
@@ -8,7 +17,6 @@ typedef struct LinkedList LinkedList;
 
 
 void append(LinkedList* list, LinkedList* val)
-
 {
     if (list->next == 0)
     {
@@ -22,6 +30,7 @@ void append(LinkedList* list, LinkedList* val)
 
 void traverse(LinkedList* list)
 {
+    printf("Number: %s", list->value);
 
     if (list->next != 0)
     {
@@ -35,6 +44,15 @@ int main(int argc, char** argv)
     LinkedList v0;// = {5, 0};
     LinkedList v1;// = {2, 0};
 
+    list.value = 4;
+    list.next = 0;
+
+    v0.value = 5;
+    v0.next = 0;
+
+    v1.value = 2;
+    v1.next = 0;
+
     append(&list, &v0);
     append(&list, &v1);
     
@@ -45,4 +63,4 @@ int main(int argc, char** argv)
     char c = (char)a;
 
     return 0;
-}
+}*/
