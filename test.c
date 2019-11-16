@@ -31,14 +31,18 @@ void traverse(LinkedList* list)
 
 int main(int argc, char** argv)
 {
-    // LinkedList list = {4, 0};
-    // LinkedList v0 = {5, 0};
-    // LinkedList v1 = {2, 0};
+    LinkedList list;// = {4, 0};
+    LinkedList v0;// = {5, 0};
+    LinkedList v1;// = {2, 0};
 
     append(&list, &v0);
     append(&list, &v1);
     
     traverse(&list);
+
+    int a = 0;
+
+    char c = (char)a;
 
     return 0;
 }

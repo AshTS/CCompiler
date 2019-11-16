@@ -109,7 +109,7 @@ def check_identifier(token):
 
 
 def check_raw_type(token, context):
-    return (token.data in ["char", "short", "int", "void"]) or context.check_type(token.data)
+    return (token.data in defines.type_starting_identifiers) or context.check_type(token.data)
 
 
 def parse_identifier(context):
@@ -179,8 +179,10 @@ def parse_variable_declaration(context):
     children = [parse_type(context)]
     children.append(parse_identifier(context))
 
+    context.add_var(children[1].data)
+
     if not context.tokens.peek().data == "=":
-        report_parse_error("Expected '=' token", context.tokens)
+        return ParseNode("VariableDeclaration", children)
     else:
         next(context.tokens)
 
@@ -217,15 +219,13 @@ def parse_expression(context, level=15, add=0):
         report_parse_error("Expected Expression", context.tokens)
 
     elif level == 1:    # a++, a--, a(), a[], a., a->
+        identifier = check_identifier(context.tokens.peek())
         result = parse_expression(context, level - 1)
 
-        if context.tokens.peek().data == "++":
-            next(context.tokens)
-            return ParseNode("PostInc", [result])
-        elif context.tokens.peek().data == "--":
-            next(context.tokens)
-            return ParseNode("PostDec", [result])
-        elif context.tokens.peek().data == "(":
+        if context.tokens.peek().data == "(" and identifier:
+            if not context.check_func(result.data):
+                report_parse_error("Undefined Function Identifier '%s'" % result.data, context.tokens)
+
             next(context.tokens)
 
             children = [result]
@@ -244,6 +244,16 @@ def parse_expression(context, level=15, add=0):
                 next(context.tokens)
             
             return ParseNode("FuncCall", children)
+
+        if identifier and not context.check_var(result.data):
+                report_parse_error("Undefined Variable Identifier '%s'" % result.data, context.tokens)
+        
+        if context.tokens.peek().data == "++":
+            next(context.tokens)
+            return ParseNode("PostInc", [result])
+        elif context.tokens.peek().data == "--":
+            next(context.tokens)
+            return ParseNode("PostDec", [result])
         elif context.tokens.peek().data == "[":
             next(context.tokens)
 
@@ -286,7 +296,7 @@ def parse_expression(context, level=15, add=0):
         elif context.tokens.peek().data == "~":
             next(context.tokens)
             return ParseNode("BitwiseNot", [parse_expression(context, level)])
-        elif context.tokens.peek().data == "(" and context.tokens.peek(1).data in defines.type_starting_identifiers:
+        elif context.tokens.peek().data == "(" and check_raw_type(context.tokens.peek(1), context):
             next(context.tokens)
             children = [parse_type(context)]
 
@@ -499,6 +509,7 @@ def parse_statement(context):
         next(context.tokens)
         return ParseNode("NOP", [])
     elif context.tokens.peek().data == "{":
+        context.push_scope(Scope())
         next(context.tokens)
 
         children = []
@@ -507,6 +518,8 @@ def parse_statement(context):
             children.append(parse_statement(context))
 
         next(context.tokens)
+
+        context.pop_scope()
 
         return ParseNode("Compound", children)
     elif context.tokens.peek().data == "return":
@@ -624,7 +637,7 @@ def parse_statement(context):
         children.append(parse_statement(context))
 
         return ParseNode("For", children)
-    elif context.tokens.peek().data in defines.type_starting_identifiers:
+    elif check_raw_type(context.tokens.peek(), context):
         node = parse_variable_declaration(context)
 
         if not context.tokens.peek().data == ";":
@@ -648,6 +661,10 @@ def parse_statement(context):
 def parse_function_def(context):
     children = [parse_type(context), parse_identifier(context)]
 
+    context.add_func(children[1].data)
+
+    context.push_scope(Scope())
+
     if not context.tokens.peek().data == "(":
         report_parse_error("Expected '(' token", context.tokens)
     else:
@@ -655,6 +672,8 @@ def parse_function_def(context):
 
     while not context.tokens.peek().data == ")":
         children.append(parse_argument(context))
+
+        context.add_var(children[-1].children[1].data)
 
         if context.tokens.peek().data == ",":
             next(context.tokens)
@@ -667,6 +686,8 @@ def parse_function_def(context):
         next(context.tokens)
 
     children.append(parse_statement(context))
+
+    context.pop_scope()
 
     return ParseNode("Function", children)
 
@@ -684,6 +705,8 @@ def parse_typedef(context):
         report_parse_error("Expected ';' token", context.tokens)
     else:
         next(context.tokens)
+
+    context.add_type(children[1].data)
 
     return ParseNode("TypeDef", children)
 
