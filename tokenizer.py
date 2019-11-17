@@ -3,7 +3,11 @@ from utils import PeekIter
 
 class Token:
     def __init__(self, data, line, col, line_map, file_name="[unknown]"):
-        self.data, self.col, self.line, self.file = data, col, *line_map[line]
+        if line_map is not None:
+            self.data, self.col, self.line, self.file = data, col, *line_map[line]
+        else:
+            self.data, self.col, self.line, self.file = data, col, line, file_name
+
 
     def __repr__(self):
         return "<'%s' %s, %i:%i>" % (self.data, self.file, self.line, self.col)
@@ -107,3 +111,31 @@ def tokenize(text, line_map, file_name="[unknown]"):
                 current_word += c
     
     return tokens
+
+
+def macros(tokens, preprocessor_context):
+    defines = {}
+    for key in preprocessor_context.defines:
+        val, file_info = preprocessor_context.defines[key]
+        file_name, line, col = file_info
+        
+
+        if val != "":
+            macro_tokens = tokenize(val, None, "%s[macro<%s>]" % (file_name, key))
+            for t in macro_tokens:
+                t.line += line
+                t.col += col
+            defines[key] = macro_tokens
+
+    new_tokens = []
+    for token in tokens:
+        if token.data in defines:
+            new_tokens += defines[token.data]
+        else:
+            new_tokens.append(token)
+
+    while tokens != new_tokens:
+        tokens = new_tokens
+        new_tokens = macros(tokens, preprocessor_context)
+
+    return new_tokens

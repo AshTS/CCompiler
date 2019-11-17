@@ -1,7 +1,9 @@
-#define VAL 0
+#include <stdio.h>
+    #define VAL 0 + VAL2
 
 int main()
 {
+    int hello = 0;
     return VAL;
 }
 

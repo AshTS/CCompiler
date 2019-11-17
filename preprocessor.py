@@ -3,8 +3,8 @@ class Context:
         self.visited_files = visited_files if visited_files is not None else []
         self.defines = defines if defines is not None else {}
 
-    def define(self, name, value):
-        self.defines[name] = value
+    def define(self, name, value, file_name, line, col):
+        self.defines[name] = value, (file_name, line, col)
 
 
 def preprocess(data,file_name="[unknown]", context=None):
@@ -18,7 +18,8 @@ def preprocess(data,file_name="[unknown]", context=None):
     result = ""
 
     for i, line in enumerate(data.split("\n")):
-        if line.startswith("#"):
+        if line.strip().startswith("#"):
+            pre_chars, line = line.index("#"), line.strip()
             item = line.split(" ")[0][1:]
             args = line.split(" ")[1:]
 
@@ -36,8 +37,9 @@ def preprocess(data,file_name="[unknown]", context=None):
 
                 included_file_data = open(included_file_name, "r").read()
 
-                processed, included_line_map = preprocess(included_file_data, included_file_name, context)
+                processed, included_line_map, _ = preprocess(included_file_data, included_file_name, context)
                 result += processed + "\n"
+
 
                 for key in included_line_map.keys():
                     line_map[key - 1 + current_line] = included_line_map[key]
@@ -45,9 +47,7 @@ def preprocess(data,file_name="[unknown]", context=None):
                 current_line += len(processed.split("\n")) - 1
 
             elif item == "define":
-                context.define(args[0], " ".join(args[1:]))
-                print(context.defines)
-
+                context.define(args[0], " ".join(args[1:]), file_name, i, pre_chars + 9 + len(args[0]))
         else:
             result += line + "\n"
 
@@ -55,5 +55,5 @@ def preprocess(data,file_name="[unknown]", context=None):
 
         current_line += 1
 
-    return result, line_map
+    return result, line_map, context
 
