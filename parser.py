@@ -552,6 +552,24 @@ def parse_statement(context):
         children.append(parse_statement(context))
 
         return ParseNode("While", children)
+    elif context.tokens.peek().data == "continue":
+        next(context.tokens)
+
+        if not context.tokens.peek().data == ";":
+            report_parse_error("Expected ';' token", context.tokens)
+        else:
+            next(context.tokens)
+
+        return ParseNode("Continue", [])
+    elif context.tokens.peek().data == "break":
+        next(context.tokens)
+
+        if not context.tokens.peek().data == ";":
+            report_parse_error("Expected ';' token", context.tokens)
+        else:
+            next(context.tokens)
+
+        return ParseNode("Break", [])
     elif context.tokens.peek().data == "if":
         next(context.tokens)
 
@@ -602,6 +620,56 @@ def parse_statement(context):
                 break
 
         return ParseNode("If", children)
+    elif context.tokens.peek().data == "switch":
+        next(context.tokens)
+
+        children = []
+
+        if not context.tokens.peek().data == "(":
+            report_parse_error("Expected '(' token", context.tokens)
+        else:
+            next(context.tokens)
+
+        children.append(parse_expression(context))
+
+        if not context.tokens.peek().data == ")":
+            report_parse_error("Expected ')' token", context.tokens)
+        else:
+            next(context.tokens)
+
+        if not context.tokens.peek().data == "{":
+            report_parse_error("Expected '{' token", context.tokens)
+        else:
+            next(context.tokens)
+
+        while not context.tokens.peek().data == "}":
+            if context.tokens.peek().data == "default":
+                next(context.tokens)
+
+                if not context.tokens.peek().data == ":":
+                    report_parse_error("Expected ':' token", context.tokens)
+                else:
+                    next(context.tokens)
+                
+                children.append(ParseNode("Default"))
+            elif context.tokens.peek().data == "case":
+                next(context.tokens)
+
+                children.append(ParseNode("Case", [parse_expression(context, 0)]))
+
+                if not context.tokens.peek().data == ":":
+                    report_parse_error("Expected ':' token", context.tokens)
+                else:
+                    next(context.tokens)
+            else:
+                children.append(parse_statement(context))
+
+        if not context.tokens.peek().data == "}":
+            report_parse_error("Expected '}' token", context.tokens)
+        else:
+            next(context.tokens)
+
+        return ParseNode("Switch", children)
     elif context.tokens.peek().data == "for":
         next(context.tokens)
 

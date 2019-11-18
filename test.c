@@ -3,7 +3,18 @@
 
 int main()
 {
-    return MIN(5, 6);
+    int i = 0;
+    switch (i)
+    {
+        case 0:
+            printf("Hi\n");
+            break;
+        case 1:
+        case 2:
+            printf("Good ");
+        default:
+            printf("Bye!\n");
+    }
 }
 
 /*#include "stdio.h"
