@@ -1,5 +1,5 @@
 from utils import PeekIter
-
+from errors import report_parse_error
 
 class Token:
     def __init__(self, data, line, col, line_map, file_name="[unknown]"):
@@ -115,10 +115,11 @@ def tokenize(text, line_map, file_name="[unknown]"):
 
 def macros(tokens, preprocessor_context):
     defines = {}
+    function_macro_data = {}
+
     for key in preprocessor_context.defines:
-        val, file_info = preprocessor_context.defines[key]
+        val, file_info, function_info = preprocessor_context.defines[key]
         file_name, line, col = file_info
-        
 
         if val != "":
             macro_tokens = tokenize(val, None, "%s[macro<%s>]" % (file_name, key))
@@ -127,10 +128,58 @@ def macros(tokens, preprocessor_context):
                 t.col += col
             defines[key] = macro_tokens
 
+        if function_info is not None:
+            function_macro_data[key] = function_info
+
     new_tokens = []
-    for token in tokens:
+    peek_tokens = PeekIter(tokens)
+    for token in peek_tokens:
         if token.data in defines:
-            new_tokens += defines[token.data]
+            if token.data not in function_macro_data:
+                new_tokens += defines[token.data]
+            else:
+                if peek_tokens.peek().data != "(":
+                    report_parse_error("Expected '(' token for a function type macro", peek_tokens)
+                else:
+                    next(peek_tokens)
+
+                arguments = []
+                current_argument = []
+
+                while peek_tokens.peek().data != ")":
+                    if peek_tokens.peek().data != ",":
+                        current_argument += [next(peek_tokens)]
+                    else:
+                        next(peek_tokens)
+                        arguments.append(current_argument)
+                        current_argument = []
+                    
+                    if peek_tokens.peek().data == ")":
+                        arguments.append(current_argument)
+                        current_argument = []
+
+                    print("Arguments: ", arguments, "\nCurrent: ", current_argument)
+                        
+                arguments_by_name = {}
+
+                if len(arguments) == len(function_macro_data[key]):
+                    for arg, arg_name in zip(arguments, function_macro_data[key]):
+                        arguments_by_name[arg_name] = arg
+
+                    print(arguments_by_name)
+
+                    for t in defines[token.data]:
+                        if t.data not in arguments_by_name:
+                            new_tokens.append(t)
+                        else:
+                            new_tokens += arguments_by_name[t.data]
+                else:
+                    report_parse_error("Unexpected number of arguments", peek_tokens)
+
+                if peek_tokens.peek().data != ")":
+                    report_parse_error("Expected ')' token for a function type macro", peek_tokens)
+                else:
+                    next(peek_tokens)
         else:
             new_tokens.append(token)
 

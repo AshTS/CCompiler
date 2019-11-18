@@ -3,8 +3,8 @@ class Context:
         self.visited_files = visited_files if visited_files is not None else []
         self.defines = defines if defines is not None else {}
 
-    def define(self, name, value, file_name, line, col):
-        self.defines[name] = value, (file_name, line, col)
+    def define(self, name, value, file_name, line, col, func_data):
+        self.defines[name] = value, (file_name, line, col), func_data
 
 
 def preprocess(data,file_name="[unknown]", context=None):
@@ -22,15 +22,12 @@ def preprocess(data,file_name="[unknown]", context=None):
             pre_chars, line = line.index("#"), line.strip()
             item = line.split(" ")[0][1:]
             args = line.split(" ")[1:]
-
-            # print("Found Preprocessor: '%s'" % item)
-            # print("Args: ",  str(args))
-
+            
             if item == "include":
                 included_file_name = args[0][1:-1]
 
                 if included_file_name in context.visited_files:
-                    print("Preprocessor Skipping file '%s', already visited" % included_file_name)
+                    # print("Preprocessor Skipping file '%s', already visited" % included_file_name)
                     continue
 
                 context.visited_files.append(included_file_name)
@@ -47,7 +44,21 @@ def preprocess(data,file_name="[unknown]", context=None):
                 current_line += len(processed.split("\n")) - 1
 
             elif item == "define":
-                context.define(args[0], " ".join(args[1:]), file_name, i, pre_chars + 9 + len(args[0]))
+                title = args[0]
+                i = 1
+                if "(" in title:
+                    while not ")" in title:
+                        title += " " + args[i]
+                        i += 1
+
+                value = " ".join(args[i:])
+
+                func_data = None
+
+                if "(" in title:
+                    func_data = [item.strip() for item in title.split("(")[1].split(")")[0].split(",")]
+
+                context.define(title.split("(")[0], value, file_name, i, pre_chars + 9 + len(args[0]), func_data)
         else:
             result += line + "\n"
 

@@ -1,10 +1,9 @@
 #include <stdio.h>
-    #define VAL 0 + VAL2
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 int main()
 {
-    int hello = 0;
-    return VAL;
+    return MIN(5, 6);
 }
 
 /*#include "stdio.h"
