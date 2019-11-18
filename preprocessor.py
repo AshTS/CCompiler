@@ -3,6 +3,25 @@ class Context:
         self.visited_files = visited_files if visited_files is not None else []
         self.defines = defines if defines is not None else {}
 
+        self.if_stacks = [True]
+
+    def last_if(self):
+        return self.if_stacks[-1]
+
+    def end_if(self):
+        self.if_stacks = self.if_stacks[:-1]
+
+    def if_def(self, val):
+        self.if_stacks.append(val in self.defines)
+
+    def if_ndef(self, val):
+        self.if_stacks.append(val not in self.defines)
+
+    def if_else(self):
+        v = not self.last_if()
+        self.end_if()
+        self.if_stacks.append(v)
+
     def define(self, name, value, file_name, line, col, func_data):
         self.defines[name] = value, (file_name, line, col), func_data
 
@@ -23,44 +42,61 @@ def preprocess(data,file_name="[unknown]", context=None):
             item = line.split(" ")[0][1:]
             args = line.split(" ")[1:]
             
-            if item == "include":
-                included_file_name = args[0][1:-1]
+            if item == "endif":
+                context.end_if()
 
-                if included_file_name in context.visited_files:
-                    # print("Preprocessor Skipping file '%s', already visited" % included_file_name)
-                    continue
+            elif item == "else":
+                context.if_else()
 
-                context.visited_files.append(included_file_name)
+            if context.last_if():
 
-                included_file_data = open(included_file_name, "r").read()
+                if item == "include":
+                    included_file_name = args[0][1:-1]
 
-                processed, included_line_map, _ = preprocess(included_file_data, included_file_name, context)
-                result += processed + "\n"
+                    
+
+                    context.visited_files.append(included_file_name)
+
+                    included_file_data = open(included_file_name, "r").read()
+
+                    processed, included_line_map, _ = preprocess(included_file_data, included_file_name, context)
+                    result += processed + "\n"
 
 
-                for key in included_line_map.keys():
-                    line_map[key - 1 + current_line] = included_line_map[key]
+                    for key in included_line_map.keys():
+                        line_map[key - 1 + current_line] = included_line_map[key]
 
-                current_line += len(processed.split("\n")) - 1
+                    current_line += len(processed.split("\n")) - 1
 
-            elif item == "define":
-                title = args[0]
-                i = 1
-                if "(" in title:
-                    while not ")" in title:
-                        title += " " + args[i]
-                        i += 1
+                elif item == "define":
+                    title = args[0]
+                    i = 1
+                    if "(" in title:
+                        while not ")" in title:
+                            title += " " + args[i]
+                            i += 1
 
-                value = " ".join(args[i:])
+                    value = " ".join(args[i:])
 
-                func_data = None
+                    func_data = None
 
-                if "(" in title:
-                    func_data = [item.strip() for item in title.split("(")[1].split(")")[0].split(",")]
+                    if "(" in title:
+                        func_data = [item.strip() for item in title.split("(")[1].split(")")[0].split(",")]
 
-                context.define(title.split("(")[0], value, file_name, i, pre_chars + 9 + len(args[0]), func_data)
+                    context.define(title.split("(")[0], value, file_name, i, pre_chars + 9 + len(args[0]), func_data)
+            
+                elif item == "undef":
+                    if args[0] in context.defines:
+                        del context.defines[args[0]]
+
+                elif item == "ifdef":
+                    context.if_def(args[0])
+
+                elif item == "ifndef":
+                    context.if_ndef(args[0])
         else:
-            result += line + "\n"
+            if context.last_if():
+                result += line + "\n"
 
         line_map[current_line] = (i + 1, file_name)
 
