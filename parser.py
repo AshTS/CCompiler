@@ -114,22 +114,43 @@ def parse_identifier(context):
 
 
 def parse_type(context):
-    t = ""
-    if context.tokens.peek().data in ["unsigned", "signed", "struct"]:
-        t += next(context.tokens).data + " "
+    result = ""
 
-    if not check_raw_type(context.tokens.peek(), context):
-        if not check_identifier(context.tokens.peek()):
-            report_parse_error("Expected type token", context.tokens)
-        else:
-            t += next(context.tokens).data
+    if context.tokens.peek().data == "const":
+        result += next(context.tokens).data
+
+    if context.tokens.peek().data in ["signed", "unsigned"]:
+        v = " " + next(context.tokens).data
+        result += v
+
+        if context.tokens.peek().data not in ["int", "short", "char"]:
+            report_parse_error("Cannot apply modifier '%s' to type '%s'" % (v.strip(), context.tokens.peek().data), context.tokens)
+
+    elif context.tokens.peek().data == "struct":
+        result += " " + next(context.tokens).data
+
+        if context.tokens.peek().data in ["int", "short", "char", "float", "void"]:
+            report_parse_error("Type '%s' cannot be a struct" % (context.tokens.peek().data), context.tokens)
+
+    if not check_identifier(context.tokens.peek()):
+        report_parse_error("Expected Type", context.tokens)
     else:
-        t += next(context.tokens).data
+        result += " " + next(context.tokens).data
 
     while context.tokens.peek().data == "*":
-        t += next(context.tokens).data
+        result += next(context.tokens).data
 
-    return ParseNode(t, [])
+    if context.tokens.peek().data == "[":
+        result += "*"
+        next(context.tokens)
+
+        if context.tokens.peek().data != "]":  
+            report_parse_error("Expected ']' token", context.tokens)
+        else:
+            next(context.tokens)
+        
+
+    return ParseNode(result.strip(), [])
 
 
 def parse_argument(context):
@@ -170,19 +191,19 @@ def parse_struct_def(context):
 
 
 def parse_variable_declaration(context):
-    children = [parse_type(context)]
-    children.append(parse_identifier(context))
+    declarations = []
+    
+    raw_type = parse_type(context)
 
-    context.add_var(children[1].data)
+    while True:
+        children = [ParseNode(raw_type.data)]
 
-    if not context.tokens.peek().data == "=":
-        return ParseNode("VariableDeclaration", children)
+        children
+
+    if len(declarations) == 1:
+        return declarations[0]
     else:
-        next(context.tokens)
-
-    children.append(parse_expression(context))
-
-    return ParseNode("VariableDeclaration", children)
+        return ParseNode("Declarations", declarations)
 
 
 def parse_expression(context, level=15, add=0):

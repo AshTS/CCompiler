@@ -1,14 +1,14 @@
-    Enums,
-    Constant Types,
-X   Floats,
-    Unions,
-    Intermediate Representation,
-    Optimization,
-    Generic ASM definition,
-    Pseudo Linker,
-    Revamp Type Parser,
-    Type Checking in Parsing,
+    Enums
+    Constant Types
+X   Floats
+    Unions
+    Intermediate Representation
+    Optimization
+    Generic ASM definition
+    Pseudo Linker
+X   Revamp Type Parser
+    Type Checking in Parsing
     Add Position information to ParseNode's
     Add post parsing type checker
-
+    Array declarations
 

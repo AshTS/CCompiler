@@ -1,11 +1,6 @@
 #include <stdio.h>
 
-int main()
+int main(int argc, char*[] argv)
 {
-    const unsigned int * val = 0;
-    float i = 3.14;
-
-    printf("IGNORED!");
-
-    return 0;
+    int array[100];
 }
