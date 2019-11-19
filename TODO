@@ -10,5 +10,6 @@ X   Revamp Type Parser
     Type Checking in Parsing
     Add Position information to ParseNode's
     Add post parsing type checker
-    Array declarations
-
+X   Array declarations
+    Struct assignment
+    Typedef Inligning in Parser

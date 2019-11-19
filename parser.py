@@ -198,7 +198,34 @@ def parse_variable_declaration(context):
     while True:
         children = [ParseNode(raw_type.data)]
 
-        children
+        children.append(parse_identifier(context))
+
+        if context.tokens.peek().data == "=":
+            next(context.tokens)
+
+            children.append(parse_expression(context, add=-1))
+            children.append(ParseNode(""))
+
+        elif context.tokens.peek().data == "[":
+            next(context.tokens)
+
+            children.append(ParseNode(""))
+            children.append(ParseNode("ArraySize", [parse_expression(context, 0)]))
+
+            if not context.tokens.peek().data == "]":
+                report_parse_error("Expected ']' token", context.tokens)
+            else:
+                next(context.tokens)
+            
+
+        declarations.append(ParseNode("VariableDeclaration", children))
+
+        if context.tokens.peek().data == ",":
+            next(context.tokens)
+
+        else:
+            break
+        
 
     if len(declarations) == 1:
         return declarations[0]
