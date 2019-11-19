@@ -20,3 +20,30 @@ class PeekIter:
 
     def __iter__(self):
         return self
+
+def check_integer(data):
+    num_chars = [str(i) for i in range(10)]
+
+    for c in data:
+        if not c in num_chars:
+            return False
+
+    return True
+
+
+def check_float(data):
+    num_chars = [str(i) for i in range(10)]
+
+    count = 0
+
+    for c in data:
+        if c == ".":
+            if count == 0:
+                count += 1
+                continue
+            else:
+                return False
+        if not c in num_chars:
+            return False
+
+    return True

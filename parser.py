@@ -1,4 +1,6 @@
 from utils import PeekIter
+from utils import check_integer as check_integer_raw
+from utils import check_float as check_float_raw
 import defines
 from errors import report_parse_error
 
@@ -70,22 +72,18 @@ class ParserContext:
         self.scopes[0].vardefs.append(data)
 
 
-def check_integer(token):
-    data = token.data
-
-    num_chars = [str(i) for i in range(10)]
-
-    for c in data:
-        if not c in num_chars:
-            return False
-
-    return True
-
-
 def check_string(token):
     data = token.data
 
     return data.startswith('"') and data.endswith('"')
+
+
+def check_integer(token):
+    return check_integer_raw(token.data)
+
+
+def check_float(token):
+    return check_float_raw(token.data)
 
 
 def check_identifier(token):
@@ -195,7 +193,10 @@ def parse_expression(context, level=15, add=0):
             return parse_identifier(context)
 
         elif check_integer(context.tokens.peek()):
-            return ParseNode(next(context.tokens).data)
+            return ParseNode("Integer", [ParseNode(next(context.tokens).data)])
+
+        elif check_float(context.tokens.peek()):
+            return ParseNode("Float", [ParseNode(next(context.tokens).data)])
 
         elif check_string(context.tokens.peek()):
             return ParseNode("String", [ParseNode(next(context.tokens).data)])

@@ -1,4 +1,4 @@
-from utils import PeekIter
+from utils import PeekIter, check_integer
 from errors import report_parse_error
 
 class Token:
@@ -90,6 +90,10 @@ def tokenize(text, line_map, file_name="[unknown]"):
                     tokens.append(Token(c, line_number, column_number - 1, line_map, file_name))
                     current_word = ""
             elif c in symbols_first:
+                if check_integer(current_word) and c == ".":
+                    current_word += c
+                    continue
+
                 if current_word != "":
                     tokens.append(Token(current_word, line_number, column_number - len(current_word), line_map, file_name))
                 current_word = ""

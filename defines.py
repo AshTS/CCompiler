@@ -1,1 +1,1 @@
-type_starting_identifiers = ["unsigned", "signed", "struct", "int", "short", "char"]
+type_starting_identifiers = ["unsigned", "signed", "struct", "int", "short", "char", "const", "float"]
