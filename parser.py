@@ -28,6 +28,7 @@ class Scope:
         self.typedefs = {}
         self.funcdefs = []
         self.vardefs = []
+        self.vartypes = {}
 
 
 class ParserContext:
@@ -63,6 +64,13 @@ class ParserContext:
 
         return None
 
+    def get_var_type(self, data):
+        for scope in self.scopes:
+            if data in scope.vartypes:
+                return scope.vartypes[data]
+
+        return None
+
     def push_scope(self, scope):
         self.scopes = [scope] + self.scopes
 
@@ -75,8 +83,9 @@ class ParserContext:
     def add_func(self, data):
         self.scopes[0].funcdefs.append(data)
 
-    def add_var(self, data):
+    def add_var(self, data, data_type):
         self.scopes[0].vardefs.append(data)
+        self.scopes[0].vartypes[data] = data_type
 
 
 def check_string(token):
@@ -230,6 +239,7 @@ def parse_variable_declaration(context):
             else:
                 next(context.tokens)
             
+        context.add_var(children[1].data, children[0].data)
 
         declarations.append(ParseNode("VariableDeclaration", children))
 
@@ -802,7 +812,7 @@ def parse_function_def(context):
     while not context.tokens.peek().data == ")":
         children.append(parse_argument(context))
 
-        context.add_var(children[-1].children[1].data)
+        context.add_var(children[-1].children[1].data, children[-1].children[0].data)
 
         if context.tokens.peek().data == ",":
             next(context.tokens)
@@ -877,6 +887,11 @@ def parse_enum(context):
 
     if not context.tokens.peek().data == "}":
         report_parse_error("Expected '}' token", context.tokens)
+    else:
+        next(context.tokens)
+
+    if not context.tokens.peek().data == ";":
+        report_parse_error("Expected ';' token", context.tokens)
     else:
         next(context.tokens)
 

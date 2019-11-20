@@ -11,7 +11,7 @@ enum Test
     VAL10,
     VAL3=3,
     VAL4
-}
+};
 
 int main(int argc, char** argv)
 {

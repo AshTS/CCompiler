@@ -13,3 +13,4 @@ X   Revamp Type Parser
 X   Array declarations
     Struct assignment
 X   Typedef Inligning in Parser
+    Global Variables
