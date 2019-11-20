@@ -3,6 +3,11 @@ X   Constant Types
 X   Floats
     Unions
     Intermediate Representation
+X       Line and Program Classes
+        Function Seperation
+        Function Generation
+        Variable Declarations
+        etc.
     Optimization
     Generic ASM definition
     Pseudo Linker
