@@ -17,7 +17,7 @@ class ParseNode:
             print("%s{" % (pre))
             for child in self.children:
                 if child is None:
-                    print("%s  None", pre)
+                    print("%s  None" % pre)
                 else:
                     child.display(pre_num + 1)
             print("%s}" % (pre))
@@ -177,6 +177,30 @@ def parse_argument(context):
     return ParseNode("Argument", [parse_type(context), parse_identifier(context)])
 
 
+def parse_struct_value(context):
+    children = []
+
+    if not context.tokens.peek().data == "{":
+        report_parse_error("Expected '{' token", context.tokens)
+    else:
+        next(context.tokens)
+
+    while context.tokens.peek().data != "}":
+        children.append(parse_expression(context, add=-1))
+
+        if context.tokens.peek().data == ",":
+            next(context.tokens)
+        else:
+            break
+
+    if not context.tokens.peek().data == "}":
+        report_parse_error("Expected '}' token", context.tokens)
+    else:
+        next(context.tokens)
+
+    return ParseNode("StructValue", children)
+
+
 def parse_struct_def(context):
     magic = next(context.tokens)
     if magic.data != "struct":
@@ -259,8 +283,11 @@ def parse_variable_declaration(context):
 def parse_expression(context, level=15, add=0):
     level += add
 
-    if level == 0:      # Raw Ident, Raw Num, ()
-        if check_identifier(context.tokens.peek()):
+    if level == 0:      # Struct, Raw Ident, Raw Num, ()
+        if context.tokens.peek().data == "{":
+            return parse_struct_value(context)
+
+        elif check_identifier(context.tokens.peek()):
             return parse_identifier(context)
 
         elif check_integer(context.tokens.peek()):

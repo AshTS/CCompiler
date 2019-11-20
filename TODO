@@ -11,6 +11,6 @@ X   Revamp Type Parser
     Add Position information to ParseNode's
     Add post parsing type checker
 X   Array declarations
-    Struct assignment
+X   Struct assignment
 X   Typedef Inligning in Parser
     Global Variables

@@ -2,20 +2,15 @@
 
 typedef int* INT_ARRAY;
 
-enum Test
+struct Point
 {
-    VAL0,
-    VAL1,
-    VAL8=8,
-    VAL9,
-    VAL10,
-    VAL3=3,
-    VAL4
+    float x;
+    float y;
+    float z;
 };
 
 int main(int argc, char** argv)
 {
-    int array[100];
-
-    INT_ARRAY new_array = array;
+    struct Point point = {0.0, 1.0, -3.14};
+    
 }
