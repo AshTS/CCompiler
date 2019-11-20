@@ -137,6 +137,9 @@ def parse_identifier(context):
 def parse_type(context):
     result = ""
 
+    if context.tokens.peek().data == "static":
+        result += " " + next(context.tokens).data
+
     if context.tokens.peek().data == "const":
         result += next(context.tokens).data
 

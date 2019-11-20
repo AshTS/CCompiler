@@ -57,7 +57,11 @@ def preprocess(data,file_name="[unknown]", context=None):
 
                     context.visited_files.append(included_file_name)
 
-                    included_file_data = open(included_file_name, "r").read()
+                    try:
+                        included_file_data = open(included_file_name, "r").read()
+                    except FileNotFoundError:
+                        print("Unable to read file '%s'" % included_file_name)
+                        included_file_data = ""
 
                     processed, included_line_map, _ = preprocess(included_file_data, included_file_name, context)
                     result += processed + "\n"
