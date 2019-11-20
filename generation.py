@@ -14,7 +14,7 @@ class Line:
             if self.program.address_aliases[k] == self.i:
                 alias = k + ":"
 
-        return "%03i %s %s %s%s" % (self.i, alias.ljust(7), self.command.rjust(8), 
+        return "%03i %s %s %s%s" % (self.i, alias.ljust(10), self.command.rjust(8), 
                                    ", ".join([(str(arg)).rjust(5) for arg in self.arguments]).ljust(20),
                                    ", ".join([str(n) for n in self.next_vals]))
 
@@ -28,6 +28,8 @@ class Function:
         self.free_registers = []
         self.last_register = 0
 
+        self.last_label = 0
+
         self.address_aliases = {}
 
         self.name = name
@@ -36,11 +38,19 @@ class Function:
         self.ret_type = ret_type
 
 
-    def add_line(self, command, arguments, next_vals=None):
+    def add_line(self, command, arguments, next_vals=None, include_next=True):
         if next_vals is None:
             next_vals = []
-        self.lines[self.current_line] = Line(command, arguments, self.current_line, next_vals + [self.current_line + 1], self)
+        self.lines[self.current_line] = Line(command, arguments, self.current_line, next_vals + ([self.current_line + 1] if include_next else []), self)
         self.current_line += 1
+
+
+    def place_label(self):
+        label = "L%i" % self.last_label
+        self.last_label += 1
+
+        self.address_aliases[label] = self.current_line
+        return label
 
     def request_register(self):
         if len(self.free_registers) > 0:
@@ -51,6 +61,11 @@ class Function:
 
             self.assigned_registers.append("R%i" % (self.last_register - 1))
         return self.assigned_registers[-1]
+
+    def add_return(self):
+        self.address_aliases["ret"] = self.current_line
+        self.add_line("RET", [])
+
         
     def __repr__(self):
         return self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")" + ":\n" + "\n".join([str(self.lines[k]) for k in self.lines])
@@ -66,6 +81,29 @@ class Program:
         return "\n\n".join([str(f) for f in self.functions])
 
 
+def generate_expression(tree, func):
+    if tree.data == "Integer":
+        return tree.children[0].data
+
+
+def generate_statement(tree, func):
+    if tree.data == "Compound":
+        for child in tree.children:
+            generate_statement(child, func)
+    elif tree.data == "NOP":
+        return
+    elif tree.data == "Return":
+        
+        if len(tree.children) > 0:
+            func.add_line("MV", ["RET", generate_expression(tree.children[0], func)])
+        else:
+            func.add_line("MV", ["RET", "0"])
+            
+        func.add_line("J", ["ret"], ["ret"], False)
+    else:
+        func.add_line("HELLO", [])
+
+
 def generate_function(tree):
     arguments = []
 
@@ -75,7 +113,9 @@ def generate_function(tree):
 
     f = Function(tree.children[1].data, arguments, tree.children[0].data)
 
-    f.add_line("RET", [])
+    generate_statement(tree.children[-1], f)
+
+    f.add_return()
 
     return f
 
