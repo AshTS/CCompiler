@@ -4,7 +4,7 @@ X   Floats
     Unions
     Intermediate Representation
 X       Line and Program Classes
-        Function Seperation
+X       Function Seperation
         Function Generation
         Variable Declarations
         etc.

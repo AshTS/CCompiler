@@ -19,8 +19,8 @@ class Line:
                                    ", ".join([str(n) for n in self.next_vals]))
 
 
-class Program:
-    def __init__(self):
+class Function:
+    def __init__(self, name, arguments, ret_type):
         self.current_line = 0
         self.lines = {}
 
@@ -28,7 +28,13 @@ class Program:
         self.free_registers = []
         self.last_register = 0
 
-        self.address_aliases = {"ONE": 1}
+        self.address_aliases = {}
+
+        self.name = name
+
+        self.arguments = arguments
+        self.ret_type = ret_type
+
 
     def add_line(self, command, arguments, next_vals=None):
         if next_vals is None:
@@ -47,16 +53,39 @@ class Program:
         return self.assigned_registers[-1]
         
     def __repr__(self):
-        return "\n".join([str(self.lines[k]) for k in self.lines])
+        return self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")" + ":\n" + "\n".join([str(self.lines[k]) for k in self.lines])
+
+class Program:
+    def __init__(self, functions=None):
+        self.functions = [] if functions is None else functions
+
+    def add_function(self, function):
+        self.functions.append(function)
+
+    def __repr__(self):
+        return "\n\n".join([str(f) for f in self.functions])
+
+
+def generate_function(tree):
+    arguments = []
+
+    for c in tree.children[2:]:
+        if c.data == "Argument":
+            arguments.append([c.children[0].data, c.children[1].data])
+
+    f = Function(tree.children[1].data, arguments, tree.children[0].data)
+
+    f.add_line("RET", [])
+
+    return f
 
 
 def generate_program(tree):
     p = Program()
 
-    p.add_line("MOV", ["R1", p.request_register()])
-    p.add_line("JMP", ["3"])
-    p.add_line("MOV", [p.request_register(), "2"])
-    p.add_line("ADD", ["R3", p.request_register()])
+    for child in tree.children:
+        if child.data == "Function":
+            p.add_function(generate_function(child))
 
     return p
 

@@ -14,6 +14,7 @@ tokens = tokenizer.tokenize(preprocessed, line_map, input_file_name)
 tokens = tokenizer.macros(tokens, preprocessor_context)
 
 tree = parser.parse(tokens)
+tree.display()
 
 prog = generation.generate_program(tree)
 
