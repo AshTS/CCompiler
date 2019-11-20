@@ -25,7 +25,7 @@ class ParseNode:
 
 class Scope:
     def __init__(self):
-        self.typedefs = []
+        self.typedefs = {}
         self.funcdefs = []
         self.vardefs = []
 
@@ -56,14 +56,21 @@ class ParserContext:
 
         return False
 
+    def get_type(self, data):
+        for scope in self.scopes:
+            if data in scope.typedefs:
+                return scope.typedefs[data]
+
+        return None
+
     def push_scope(self, scope):
         self.scopes = [scope] + self.scopes
 
     def pop_scope(self):
         self.scopes = self.scopes[1:]
 
-    def add_type(self, data):
-        self.scopes[0].typedefs.append(data)
+    def add_type(self, data, value):
+        self.scopes[0].typedefs[data] = value
 
     def add_func(self, data):
         self.scopes[0].funcdefs.append(data)
@@ -135,7 +142,11 @@ def parse_type(context):
     if not check_identifier(context.tokens.peek()):
         report_parse_error("Expected Type", context.tokens)
     else:
-        result += " " + next(context.tokens).data
+        if context.check_type(context.tokens.peek().data):
+            result += " " + context.get_type(context.tokens.peek().data)
+            next(context.tokens)
+        else:
+            result += " " + next(context.tokens).data
 
     while context.tokens.peek().data == "*":
         result += next(context.tokens).data
@@ -208,6 +219,8 @@ def parse_variable_declaration(context):
 
         elif context.tokens.peek().data == "[":
             next(context.tokens)
+
+            children[0].data += "*"
 
             children.append(ParseNode(""))
             children.append(ParseNode("ArraySize", [parse_expression(context, 0)]))
@@ -813,7 +826,7 @@ def parse_typedef(context):
 
     magic = next(context.tokens)
     if magic.data != "typedef":
-        report_parse_error("Expected 'typedef' token", magic)
+        report_parse_error("Expected 'typedef' token", context.tokens)
 
     children = [parse_type(context), parse_identifier(context)]
 
@@ -822,10 +835,52 @@ def parse_typedef(context):
     else:
         next(context.tokens)
 
-    context.add_type(children[1].data)
+    context.add_type(children[1].data, children[0].data)
 
     return ParseNode("TypeDef", children)
 
+
+def parse_enum(context):
+    children = []
+    current = 0
+
+    if not context.tokens.peek().data == "enum":
+        report_parse_error("Expected 'typedef' token", context.tokens)
+    else:
+        next(context.tokens)
+
+    children.append(parse_identifier(context))
+
+    if not context.tokens.peek().data == "{":
+        report_parse_error("Expected '{' token", context.tokens)
+    else:
+        next(context.tokens)
+
+    while context.tokens.peek().data != "}":
+        ident = parse_identifier(context)
+        if context.tokens.peek().data == "=":
+            next(context.tokens)
+
+            num = parse_expression(context, 0)
+            if num.data == "Integer":
+                current = int(num.children[0].data)
+            else:
+                report_parse_error("Expected Integer", context.tokens)
+
+        children.append(ParseNode("EnumEqual", [ident, ParseNode("Integer", [ParseNode(str(current))])]))
+        current += 1
+
+        if context.tokens.peek().data == ",":
+            next(context.tokens)
+        else:
+            break
+
+    if not context.tokens.peek().data == "}":
+        report_parse_error("Expected '}' token", context.tokens)
+    else:
+        next(context.tokens)
+
+    return ParseNode("Enum", children)
 
 def parse_file(context):
     children = []
@@ -840,6 +895,9 @@ def parse_file(context):
 
         elif peeked.data == "typedef":
             children.append(parse_typedef(context))
+
+        elif peeked.data == "enum":
+            children.append(parse_enum(context))
 
         else:
             children.append(parse_function_def(context))
