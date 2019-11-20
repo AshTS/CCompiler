@@ -12,4 +12,4 @@ X   Revamp Type Parser
     Add post parsing type checker
 X   Array declarations
     Struct assignment
-    Typedef Inligning in Parser
+X   Typedef Inligning in Parser
