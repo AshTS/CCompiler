@@ -8,8 +8,7 @@ X   Floats
     Pseudo Linker
 X   Revamp Type Parser
     Type Checking in Parsing
-    Add Position information to ParseNode's
-    Add post parsing type checker
+X   Add Position information to ParseNode's
 X   Array declarations
 X   Struct assignment
 X   Typedef Inligning in Parser

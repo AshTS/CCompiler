@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-typedef int* INT_ARRAY;
-
 struct Point
 {
     float x;
@@ -9,8 +7,10 @@ struct Point
     float z;
 };
 
+typedef struct Point Point;
+
 int main(int argc, char** argv)
 {
-    struct Point point = {0.0, 1.0, -3.14};
-    
+    Point point = {0.0, 1.0, -3.14};
+    printf("%f", point.x);
 }

@@ -6,13 +6,17 @@ from errors import report_parse_error
 
 
 class ParseNode:
-    def __init__(self, data, children=None):
+    def __init__(self, data, children=None, pos=(0, 0, "[unknown]")):
         self.data = data
         self.children = children if children is not None else []
+        self.col, self.line, self.file = pos
 
     def display(self, pre_num=0):
         pre = "  " * pre_num
-        print("%s<%s>" % (pre, self.data))
+
+        pos_str = "[%i:%i %s]" % (self.line, self.col, self.file) if self.file != "[unknown]" else ""
+
+        print("%s<%s>\t\t%s" % (pre, self.data, pos_str))
         if len(self.children) != 0:
             print("%s{" % (pre))
             for child in self.children:
@@ -124,7 +128,8 @@ def check_raw_type(token, context):
 
 def parse_identifier(context):
     if check_identifier(context.tokens.peek()):
-        return ParseNode(next(context.tokens).data, [])
+        t = context.tokens.peek()
+        return ParseNode(next(context.tokens).data, [], (t.col, t.line, t.file))
     else:
         report_parse_error("Expected identifier token", context.tokens)
 
@@ -291,13 +296,16 @@ def parse_expression(context, level=15, add=0):
             return parse_identifier(context)
 
         elif check_integer(context.tokens.peek()):
-            return ParseNode("Integer", [ParseNode(next(context.tokens).data)])
+            t = context.tokens.peek()
+            return ParseNode("Integer", [ParseNode(next(context.tokens).data)], (t.col, t.line, t.file))
 
         elif check_float(context.tokens.peek()):
-            return ParseNode("Float", [ParseNode(next(context.tokens).data)])
+            t = context.tokens.peek()
+            return ParseNode("Float", [ParseNode(next(context.tokens).data)], (t.col, t.line, t.file))
 
         elif check_string(context.tokens.peek()):
-            return ParseNode("String", [ParseNode(next(context.tokens).data)])
+            t = context.tokens.peek()
+            return ParseNode("String", [ParseNode(next(context.tokens).data)], (t.col, t.line, t.file))
 
         elif context.tokens.peek().data == "(":
             next(context.tokens)
@@ -341,7 +349,7 @@ def parse_expression(context, level=15, add=0):
             else:
                 next(context.tokens)
             
-            return ParseNode("FuncCall", children)
+            return ParseNode("FuncCall", children, (result_token.col, result_token.line, result_token.file))
 
         if identifier and not context.check_var(result.data):
                 report_parse_error("Undefined Variable Identifier '%s'" % result.data, context.tokens, result_token)
