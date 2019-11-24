@@ -26,6 +26,7 @@ def tokenize(text, line_map, file_name="[unknown]"):
     in_multiline_comment = False
     in_comment = False
     in_string = False
+    in_char = False
 
     line_number = 1
     column_number = 0
@@ -65,6 +66,22 @@ def tokenize(text, line_map, file_name="[unknown]"):
             else:
                 current_word += c
 
+        elif in_char:
+            if c == "'":
+                in_char = False
+                current_word += c
+                tokens.append(Token(current_word, line_number, column_number - len(current_word), line_map, file_name))
+                current_word = ""
+            elif c == '\\':
+                p = next(text_iter)
+                if p == "n":
+                    current_word += "\n"
+                elif p == "t":
+                    current_word += "\t"
+                else:
+                    current_word += p
+            else:
+                current_word += c
         else:
             if c in [" ", "\n", "\t"]:
                 if current_word != "":
@@ -111,6 +128,13 @@ def tokenize(text, line_map, file_name="[unknown]"):
                     tokens.append(Token(current_word, line_number, column_number - len(current_word), line_map, file_name))
                 current_word = '"'
                 in_string = True
+
+            elif c == "'":
+                if current_word != "":
+                    tokens.append(Token(current_word, line_number, column_number - len(current_word), line_map, file_name))
+                current_word = "'"
+                in_char = True
+
             else:
                 current_word += c
     

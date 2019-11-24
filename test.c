@@ -1,8 +1,8 @@
 //#include <stdio.h>
 
-short short_add(short a, short b)
+char get_char()
 {
-    return 1;
+    return 'a';
 }
 
 int main(int argc, char** argv)

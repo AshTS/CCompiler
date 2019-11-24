@@ -108,6 +108,9 @@ class Program:
 def generate_expression(tree, func):
     if tree.data == "Integer":
         return tree.children[0].data
+    elif tree.data == "Char":
+        print(tree.children[0].data)
+        return str(ord(tree.children[0].data[1:-1]))
     else:
         return func.aliased_registers[tree.data]
 

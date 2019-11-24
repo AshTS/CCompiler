@@ -39,6 +39,8 @@ class ParserContext:
     def __init__(self, tokens):
         self.tokens = tokens
         self.scopes = [Scope()]
+        self.all_strings = ""
+        self.string_map = {}
 
     def check_type(self, data):
         for scope in self.scopes:
@@ -294,6 +296,10 @@ def parse_expression(context, level=15, add=0):
     if level == 0:      # Struct, Raw Ident, Raw Num, ()
         if context.tokens.peek().data == "{":
             return parse_struct_value(context)
+        
+        elif context.tokens.peek().data.startswith("'"):
+            data = ParseNode("Char", [ParseNode(next(context.tokens).data)])
+            return data
 
         elif check_identifier(context.tokens.peek()):
             return parse_identifier(context)
@@ -308,6 +314,7 @@ def parse_expression(context, level=15, add=0):
 
         elif check_string(context.tokens.peek()):
             t = context.tokens.peek()
+            context.all_strings += t.data[1:1]
             return ParseNode("String", [ParseNode(next(context.tokens).data)], (t.col, t.line, t.file))
 
         elif context.tokens.peek().data == "(":
