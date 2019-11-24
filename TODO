@@ -5,8 +5,8 @@ X   Floats
     Intermediate Representation
 X       Line and Program Classes
 X       Function Seperation
-        Function Generation
-        Variable Declarations
+X       Function Generation
+X       Variable Declarations
         etc.
     Optimization
     Generic ASM definition

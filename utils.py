@@ -59,3 +59,16 @@ def compare(str0, str1):
 
     for l0, l1 in zip(lines0, lines1):
         print(l0.ljust(40), "|", l1.ljust(40))
+
+
+def get_size_of_type(t):
+    if t.endswith("*"):
+        return 4
+    elif "int" in t:
+        return 4
+    elif "short" in t:
+        return 2
+    elif "char" in t:
+        return 1
+    elif "void" in t:
+        return 0

@@ -1,3 +1,6 @@
+import utils
+import defines
+
 class Line:
     def __init__(self, command, arguments, i, next_vals, program):
         self.command = command
@@ -37,6 +40,17 @@ class Function:
         self.arguments = arguments
         self.ret_type = ret_type
 
+        self.return_register = self.request_register()
+        self.aliased_registers = {"__RETURN": self.return_register}
+        self.register_sizes = {self.return_register: utils.get_size_of_type(self.ret_type)}
+
+        for arg in self.arguments:
+            self.aliased_registers[arg[1]] = self.request_register()
+            self.register_sizes[self.aliased_registers[arg[1]]] = utils.get_size_of_type(arg[0])
+
+        print(self.aliased_registers)
+        print(self.register_sizes)
+
 
     def add_line(self, command, arguments, next_vals=None, include_next=True):
         if next_vals is None:
@@ -44,13 +58,23 @@ class Function:
         self.lines[self.current_line] = Line(command, arguments, self.current_line, next_vals + ([self.current_line + 1] if include_next else []), self)
         self.current_line += 1
 
-
     def place_label(self):
         label = "L%i" % self.last_label
         self.last_label += 1
 
         self.address_aliases[label] = self.current_line
         return label
+
+    def define_variable(self, var_name, var_type):
+        self.aliased_registers[var_name] = self.request_register()
+        self.register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type)
+
+    def assign_variable(self, var_name, other):
+        reg = self.aliased_registers[var_name]
+        self.add_line("MV" + defines.suffix_by_size[self.register_sizes[reg]], [reg, other])
+
+    def clear_variable(self, var_name):
+        self.add_line("MV", [self.aliased_registers[var_name], "0"])
 
     def request_register(self):
         if len(self.free_registers) > 0:
@@ -84,6 +108,8 @@ class Program:
 def generate_expression(tree, func):
     if tree.data == "Integer":
         return tree.children[0].data
+    else:
+        return func.aliased_registers[tree.data]
 
 
 def generate_statement(tree, func):
@@ -95,14 +121,19 @@ def generate_statement(tree, func):
     elif tree.data == "Return":
         
         if len(tree.children) > 0:
-            func.add_line("MV", ["RET", generate_expression(tree.children[0], func)])
+            func.assign_variable("__RETURN", generate_expression(tree.children[0], func))
         else:
-            func.add_line("MV", ["RET", "0"])
+            func.clear_variable("__RETURN")
             
         func.add_line("J", ["ret"], ["ret"], False)
-    else:
-        func.add_line("HELLO", [])
-
+    elif tree.data == "VariableDeclaration":
+        var_type = tree.children[0].data
+        var_name = tree.children[1].data
+        var_value = generate_expression(tree.children[2], func)
+    
+        func.define_variable(var_name, var_type)
+        func.clear_variable(var_name)
+        func.assign_variable(var_name, var_value)
 
 def generate_function(tree):
     arguments = []
