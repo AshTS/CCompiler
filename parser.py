@@ -314,8 +314,9 @@ def parse_expression(context, level=15, add=0):
 
         elif check_string(context.tokens.peek()):
             t = context.tokens.peek()
-            context.all_strings += t.data[1:1]
-            return ParseNode("String", [ParseNode(next(context.tokens).data)], (t.col, t.line, t.file))
+            ptr = len(context.all_strings)
+            context.all_strings += t.data[1:-1] + chr(0)
+            return ParseNode("String", [ParseNode(next(context.tokens).data), ParseNode(str(ptr))], (t.col, t.line, t.file))
 
         elif context.tokens.peek().data == "(":
             next(context.tokens)
@@ -969,5 +970,7 @@ def parse(tokens):
     peekable = PeekIter(tokens)
     context = ParserContext(peekable)
 
-    return parse_file(context)
-    
+    result = parse_file(context)
+
+    print("'%s'" % context.all_strings)
+    return result
