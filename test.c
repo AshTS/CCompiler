@@ -7,7 +7,7 @@ char get_char()
 
 int main(int argc, char** argv)
 {
-    char* hello = "Hello World!";
-    char* hello2 = "hello world!";
-    return hello[0] + hello2[0];
+    int a = 3;
+    a = a + 4;
+    return 4 + a;
 }

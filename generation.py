@@ -40,16 +40,14 @@ class Function:
         self.arguments = arguments
         self.ret_type = ret_type
 
+        self.register_sizes = {}
+
         self.return_register = self.request_register()
         self.aliased_registers = {"__RETURN": self.return_register}
-        self.register_sizes = {self.return_register: utils.get_size_of_type(self.ret_type)}
+        self.register_sizes[self.return_register] = utils.get_size_of_type(self.ret_type)
 
         for arg in self.arguments:
-            self.aliased_registers[arg[1]] = self.request_register()
-            self.register_sizes[self.aliased_registers[arg[1]]] = utils.get_size_of_type(arg[0])
-
-        print(self.aliased_registers)
-        print(self.register_sizes)
+            self.define_variable(arg[1], arg[0])
 
 
     def add_line(self, command, arguments, next_vals=None, include_next=True):
@@ -70,7 +68,10 @@ class Function:
         self.register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type)
 
     def assign_variable(self, var_name, other):
-        reg = self.aliased_registers[var_name]
+        if var_name in self.aliased_registers:
+            reg = self.aliased_registers[var_name]
+        else:
+            reg = var_name
         self.add_line("MV" + defines.suffix_by_size[self.register_sizes[reg]], [reg, other])
 
     def clear_variable(self, var_name):
@@ -84,6 +85,9 @@ class Function:
             self.last_register += 1
 
             self.assigned_registers.append("R%i" % (self.last_register - 1))
+
+        self.register_sizes[self.assigned_registers[-1]] = 4
+
         return self.assigned_registers[-1]
 
     def add_return(self):
@@ -109,8 +113,54 @@ def generate_expression(tree, func):
     if tree.data == "Integer":
         return tree.children[0].data
     elif tree.data == "Char":
-        print(tree.children[0].data)
         return str(ord(tree.children[0].data[1:-1]))
+    elif tree.data == "String":
+        return tree.children[1].data
+
+    elif tree.data == "Addition":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("ADD", [new_reg, arg0, arg1])
+        return new_reg
+
+    elif tree.data == "Subtract":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("SUB", [new_reg, arg0, arg1])
+        return new_reg
+
+    elif tree.data == "Multiply":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("MUL", [new_reg, arg0, arg1])
+        return new_reg
+
+    elif tree.data == "Divide":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("DIV", [new_reg, arg0, arg1])
+        return new_reg
+
+    elif tree.data == "Assignment":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        func.assign_variable(arg0, arg1)
+
+        return arg1
+
     else:
         return func.aliased_registers[tree.data]
 
@@ -138,6 +188,9 @@ def generate_statement(tree, func):
         func.clear_variable(var_name)
         func.assign_variable(var_name, var_value)
 
+    elif tree.data == "ExprCommand":
+        generate_expression(tree.children[0], func)
+
 def generate_function(tree):
     arguments = []
 
@@ -150,6 +203,8 @@ def generate_function(tree):
     generate_statement(tree.children[-1], f)
 
     f.add_return()
+
+    print(f.register_sizes)
 
     return f
 
