@@ -56,9 +56,16 @@ class Function:
         self.lines[self.current_line] = Line(command, arguments, self.current_line, next_vals + ([self.current_line + 1] if include_next else []), self)
         self.current_line += 1
 
-    def place_label(self):
+    def request_label(self):
         label = "L%i" % self.last_label
         self.last_label += 1
+
+        return label
+
+    def place_label(self, label=None):
+        if label is None:
+            label = "L%i" % self.last_label
+            self.last_label += 1
 
         self.address_aliases[label] = self.current_line
         return label
@@ -94,6 +101,12 @@ class Function:
         self.address_aliases["ret"] = self.current_line
         self.add_line("RET", [])
 
+    def add_jump(self, addr):
+        self.add_line("J", [addr], [addr], False)
+
+    def add_conditional_jump(self, inst, addr, cond):
+        self.add_line(inst, [addr, cond], [addr])
+
         
     def __repr__(self):
         return self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")" + ":\n" + "\n".join([str(self.lines[k]) for k in self.lines])
@@ -126,7 +139,7 @@ def generate_expression(tree, func):
         func.add_line("ADD", [new_reg, arg0, arg1])
         return new_reg
 
-    elif tree.data == "Subtract":
+    elif tree.data == "Subtraction":
         arg0 = generate_expression(tree.children[0], func)
         arg1 = generate_expression(tree.children[1], func)
 
@@ -178,7 +191,7 @@ def generate_statement(tree, func):
         else:
             func.clear_variable("__RETURN")
             
-        func.add_line("J", ["ret"], ["ret"], False)
+        func.add_jump("ret")
     elif tree.data == "VariableDeclaration":
         var_type = tree.children[0].data
         var_name = tree.children[1].data
@@ -190,6 +203,39 @@ def generate_statement(tree, func):
 
     elif tree.data == "ExprCommand":
         generate_expression(tree.children[0], func)
+
+    elif tree.data == "If":
+        cond = generate_expression(tree.children[0], func)
+
+        else_label = func.request_label()
+        after_label = func.request_label()
+
+        func.add_conditional_jump("BZ", else_label, cond)
+
+        generate_statement(tree.children[1], func)
+
+        func.add_jump(after_label)
+
+        func.place_label(else_label)
+
+        for child in tree.children[2:]:
+            if child.data == "Else":
+                generate_statement(child.children[0], func)
+            elif child.data == "ElseIf":
+                else_label = func.request_label()
+
+                func.add_conditional_jump("BZ", else_label, cond)
+
+                cond = generate_expression(child.children[0], func)
+
+                generate_statement(child.children[1], func)
+
+                func.add_jump(after_label)
+
+                func.place_label(else_label)
+
+
+        func.place_label(after_label)
 
 def generate_function(tree):
     arguments = []

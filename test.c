@@ -7,7 +7,20 @@ char get_char()
 
 int main(int argc, char** argv)
 {
-    int a = 3;
-    a = a + 4;
-    return 4 + a;
+    int a = 0;
+
+    if (a - 1)
+    {
+        a = 0;
+    }
+    else if (a + 1)
+    {
+        a = 2;
+    }
+    else
+    {
+        a = 1;
+    }
+
+    return a;
 }
