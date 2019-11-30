@@ -262,6 +262,39 @@ def generate_expression(tree, func, left=False):
         func.assign_variable(arg0, new_reg)
         return new_reg
 
+    elif tree.data == "AndEqual":
+        arg0 = generate_expression(tree.children[0], func, True)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("AND", [new_reg, arg0, arg1])
+
+        func.assign_variable(arg0, new_reg)
+        return new_reg
+
+    elif tree.data == "OrEqual":
+        arg0 = generate_expression(tree.children[0], func, True)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("OR", [new_reg, arg0, arg1])
+
+        func.assign_variable(arg0, new_reg)
+        return new_reg
+
+    elif tree.data == "XorEqual":
+        arg0 = generate_expression(tree.children[0], func, True)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("XOR", [new_reg, arg0, arg1])
+
+        func.assign_variable(arg0, new_reg)
+        return new_reg
+
     # Comparison Operations
 
     elif tree.data == "Equal":
