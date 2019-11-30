@@ -400,6 +400,30 @@ def generate_expression(tree, func, left=False):
 
         return new_reg
 
+    # Shift Operations
+
+    elif tree.data == "ShiftLeft":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("RLL", [new_reg, arg0, arg1])
+
+        return new_reg
+
+    elif tree.data == "ShiftRight":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("RLL", [new_reg, arg0, arg1])
+
+        return new_reg
+
+    # Bitwise Operations
+
     elif tree.data == "BitwiseNot":
         arg0 = generate_expression(tree.children[0], func)
 
@@ -408,6 +432,8 @@ def generate_expression(tree, func, left=False):
         func.add_line("NOT", [new_reg, arg1])
 
         return new_reg
+
+    # Logical Operations
 
     elif tree.data == "LogicalNot":
         arg0 = generate_expression(tree.children[0], func)
