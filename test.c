@@ -1,5 +1,6 @@
 //#include <stdio.h>
 
+/*
 void clear_screen(unsigned int addr)
 {
     int i = 0;
@@ -12,6 +13,11 @@ void clear_screen(unsigned int addr)
         }
         i++;
     }
+}*/
+
+int factorial(int i)
+{
+    return (i == 1) ? 1 : (i * factorial(i - 1));
 }
 
 int main(int argc, char** argv)

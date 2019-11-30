@@ -501,6 +501,39 @@ def generate_expression(tree, func, left=False):
 
         return new_reg
 
+    # Comma Operations
+
+    elif tree.data == "Comma":
+        last = None
+        for child in tree.children:
+            last = generate_expression(child, func)
+
+        return last
+
+    # Ternary
+
+    elif tree.data == "Ternary":
+        new_reg = func.request_register()
+
+        skip_label = func.request_label()
+        else_label = func.request_label()
+
+        cond = generate_expression(tree.children[0], func)
+        func.add_conditional_jump("BZ", else_label, cond)
+
+        v = generate_expression(tree.children[1], func)
+        func.assign_variable(new_reg, v)
+        func.add_jump(skip_label)
+
+        func.place_label(else_label)
+
+        v = generate_expression(tree.children[2], func)
+        func.assign_variable(new_reg, v)
+
+        func.place_label(skip_label)
+
+        return new_reg
+
     # Function Call
 
     elif tree.data == "FuncCall":
