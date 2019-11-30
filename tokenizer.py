@@ -87,7 +87,7 @@ def tokenize(text, line_map, file_name="[unknown]"):
                 if current_word != "":
                     tokens.append(Token(current_word, line_number, column_number - len(current_word), line_map, file_name))
                 current_word = ""
-            elif c == '/':
+            elif c == '/' and text_iter.peek() in ["*", "/"]:
                 if text_iter.peek() == "*":
                     in_multiline_comment = True
 
@@ -100,11 +100,6 @@ def tokenize(text, line_map, file_name="[unknown]"):
 
                     if current_word != "":
                         tokens.append(Token(current_word, line_number, column_number - len(current_word), line_map, file_name))
-                    current_word = ""
-                else:
-                    if current_word != "":
-                        tokens.append(Token(current_word, line_number, column_number - len(current_word), line_map, file_name))
-                    tokens.append(Token(c, line_number, column_number - 1, line_map, file_name))
                     current_word = ""
             elif c in symbols_first:
                 if check_integer(current_word) and c == ".":
@@ -186,15 +181,11 @@ def macros(tokens, preprocessor_context):
                         arguments.append(current_argument)
                         current_argument = []
 
-                    print("Arguments: ", arguments, "\nCurrent: ", current_argument)
-                        
                 arguments_by_name = {}
 
                 if len(arguments) == len(function_macro_data[key]):
                     for arg, arg_name in zip(arguments, function_macro_data[key]):
                         arguments_by_name[arg_name] = arg
-
-                    print(arguments_by_name)
 
                     for t in defines[token.data]:
                         if t.data not in arguments_by_name:

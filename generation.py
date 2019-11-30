@@ -84,6 +84,9 @@ class Function:
     def clear_variable(self, var_name):
         self.add_line("MV", [self.aliased_registers[var_name], "0"])
 
+    def init_variable(self, var_name):
+        self.add_line("INIT", [self.aliased_registers[var_name], "0"])
+
     def request_register(self):
         if len(self.free_registers) > 0:
             v, *self.free_registers = self.free_registers
@@ -174,12 +177,56 @@ def generate_expression(tree, func):
 
         return arg1
 
+    elif tree.data == "AddEqual":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("ADD", [new_reg, arg0, arg1])
+
+        func.assign_variable(arg0, new_reg)
+        return new_reg
+
+    elif tree.data == "SubtractEqual":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("SUB", [new_reg, arg0, arg1])
+
+        func.assign_variable(arg0, new_reg)
+        return new_reg
+
+    elif tree.data == "MultiplyEqual":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("MUL", [new_reg, arg0, arg1])
+
+        func.assign_variable(arg0, new_reg)
+        return new_reg
+
+    elif tree.data == "DivideEqual":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("DIV", [new_reg, arg0, arg1])
+
+        func.assign_variable(arg0, new_reg)
+        return new_reg
+
     else:
         return func.aliased_registers[tree.data]
 
 
 def generate_statement(tree, func):
-    if tree.data == "Compound":
+    if tree.data == "Compound" or tree.data == "Declarations":
         for child in tree.children:
             generate_statement(child, func)
     elif tree.data == "NOP":
@@ -198,7 +245,7 @@ def generate_statement(tree, func):
         var_value = generate_expression(tree.children[2], func)
     
         func.define_variable(var_name, var_type)
-        func.clear_variable(var_name)
+        func.init_variable(var_name)
         func.assign_variable(var_name, var_value)
 
     elif tree.data == "ExprCommand":

@@ -13,6 +13,8 @@ preprocessed, line_map, preprocessor_context = preprocessor.preprocess(input_fil
 tokens = tokenizer.tokenize(preprocessed, line_map, input_file_name)
 tokens = tokenizer.macros(tokens, preprocessor_context)
 
+print(tokens)
+
 tree = parser.parse(tokens)
 tree.display()
 
