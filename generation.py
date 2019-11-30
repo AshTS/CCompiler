@@ -368,6 +368,40 @@ def generate_expression(tree, func, left=False):
 
         return new_reg
 
+    # Subscript Operation
+
+    elif tree.data == "Subscript":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("ADD", [new_reg, arg0, arg1])
+
+        if left:
+            func.pointer_registers.append(new_reg)
+        else:
+            func.add_line("RW", [new_reg, new_reg])
+
+        return new_reg
+
+    # Function Call
+
+    elif tree.data == "FuncCall":
+        to_save = func.assigned_registers[:]
+        for reg in to_save:
+            func.add_line("BACKUP", [reg])
+
+        func.add_line("CALL", [tree.children[0].data])
+
+        new_reg = func.request_register()
+        func.assign_variable(new_reg, "R0")
+        
+        for reg in reversed(to_save):
+            func.add_line("RESTORE", [reg])
+
+        return new_reg
+
     # Possibly A Variable
 
     else:
@@ -443,6 +477,24 @@ def generate_statement(tree, func):
         func.add_conditional_jump("BZ", skip_label, cond)
 
         generate_statement(tree.children[1], func)
+
+        func.add_jump(start_label)
+        func.place_label(skip_label)
+
+    elif tree.data == "For":
+        generate_statement(tree.children[0], func)
+
+        start_label = func.request_label()
+        skip_label = func.request_label()
+
+        func.place_label(start_label)
+        
+        cond = generate_expression(tree.children[1], func)
+        func.add_conditional_jump("BZ", skip_label, cond)
+
+        generate_statement(tree.children[3], func)
+
+        generate_expression(tree.children[2], func)
 
         func.add_jump(start_label)
         func.place_label(skip_label)

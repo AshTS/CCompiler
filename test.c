@@ -3,14 +3,12 @@
 void clear_screen(unsigned int addr)
 {
     int i = 0;
-    while (i <= 16)
+    while (i < 16)
     {
-        int j = 0;
-        while (j > 64)
+        for (int j = 0; j < 64; j++)
         {
             *((unsigned char*)addr) = 0x20;
             addr += 2;
-            j++;
         }
         i++;
     }
@@ -19,6 +17,6 @@ void clear_screen(unsigned int addr)
 int main(int argc, char** argv)
 {
     clear_screen(0x8000);
-    
-    return (int)c;
+
+    return 0;
 }
