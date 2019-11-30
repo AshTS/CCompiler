@@ -385,6 +385,40 @@ def generate_expression(tree, func, left=False):
 
         return new_reg
 
+    # Unary Operations
+
+    elif tree.data == "UnaryPlus":
+        return generate_expression(tree.children[0], func)
+
+    elif tree.data == "UnaryMinus":
+        arg0 = generate_expression(tree.children[0], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("NOT", [new_reg, arg1])
+        func.add_line("ADD", [new_reg, new_reg, "1"])
+
+        return new_reg
+
+    elif tree.data == "BitwiseNot":
+        arg0 = generate_expression(tree.children[0], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("NOT", [new_reg, arg1])
+
+        return new_reg
+
+    elif tree.data == "LogicalNot":
+        arg0 = generate_expression(tree.children[0], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("CNE", [new_reg, arg1, "0"])
+        func.add_line("NOT", [new_reg, new_reg])
+        
+        return new_reg
+
     # Function Call
 
     elif tree.data == "FuncCall":
