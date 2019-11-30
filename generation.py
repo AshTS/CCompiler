@@ -593,8 +593,23 @@ def generate_expression(tree, func, left=False):
 
     elif tree.data == "FuncCall":
         to_save = func.assigned_registers[:]
+
+        registers = []
+
+        i = 1
+        for child in tree.children[1:]:
+            v = generate_expression(child, func)
+            r = func.request_register()
+            func.add_line("MV", [r, v])
+            registers.append(r)
+
         for reg in to_save:
             func.add_line("BACKUP", [reg])
+
+        i = 1
+        for r in registers:
+            func.add_line("MV", ["R%i" % i, r])
+            i += 1
 
         func.add_line("CALL", [tree.children[0].data])
 
@@ -716,8 +731,6 @@ def generate_function(tree):
     generate_statement(tree.children[-1], f)
 
     f.add_return()
-
-    print(f.register_sizes)
 
     return f
 
