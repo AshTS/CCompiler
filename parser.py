@@ -798,12 +798,7 @@ def parse_statement(context):
         else:
             next(context.tokens)
 
-        children.append(parse_expression(context))
-
-        if not context.tokens.peek().data == ";":
-            report_parse_error("Expected ';' token", context.tokens)
-        else:
-            next(context.tokens)
+        children.append(parse_statement(context))
 
         children.append(parse_expression(context))
 

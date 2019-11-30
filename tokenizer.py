@@ -132,7 +132,13 @@ def tokenize(text, line_map, file_name="[unknown]"):
 
             else:
                 current_word += c
-    
+
+    for token in tokens:
+        try:
+            token.data = str(int(token.data, 0))
+        except ValueError:
+            pass
+
     return tokens
 
 

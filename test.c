@@ -1,18 +1,24 @@
 //#include <stdio.h>
 
-char get_char()
+void clear_screen(unsigned int addr)
 {
-    return 'a';
+    int i = 0;
+    while (i <= 16)
+    {
+        int j = 0;
+        while (j > 64)
+        {
+            *((unsigned char*)addr) = 0x20;
+            addr += 2;
+            j++;
+        }
+        i++;
+    }
 }
 
 int main(int argc, char** argv)
 {
-    int a = 0, b = 0;
-
-    a += 1;
-    a -= 2;
-    a *= 3;
-    a /= 3;
-
-    return a;
+    clear_screen(0x8000);
+    
+    return (int)c;
 }

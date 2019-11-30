@@ -1,6 +1,10 @@
 import utils
 import defines
 
+#
+#   Note: For Conversion, This is Little Endian for RAM Storage
+#
+
 class Line:
     def __init__(self, command, arguments, i, next_vals, program):
         self.command = command
@@ -49,6 +53,8 @@ class Function:
         for arg in self.arguments:
             self.define_variable(arg[1], arg[0])
 
+        self.pointer_registers = []
+
 
     def add_line(self, command, arguments, next_vals=None, include_next=True):
         if next_vals is None:
@@ -79,6 +85,14 @@ class Function:
             reg = self.aliased_registers[var_name]
         else:
             reg = var_name
+
+        if reg in self.pointer_registers:
+            if other.startswith("R"):
+                s = defines.suffix_by_size[self.register_sizes[other]]
+            else:
+                s = "W"
+            self.add_line("W" + s, [reg, other])
+
         self.add_line("MV" + defines.suffix_by_size[self.register_sizes[reg]], [reg, other])
 
     def clear_variable(self, var_name):
@@ -125,13 +139,38 @@ class Program:
         return "\n\n".join([str(f) for f in self.functions])
 
 
-def generate_expression(tree, func):
+def generate_expression(tree, func, left=False):
     if tree.data == "Integer":
         return tree.children[0].data
     elif tree.data == "Char":
         return str(ord(tree.children[0].data[1:-1]))
     elif tree.data == "String":
         return tree.children[1].data
+
+    elif tree.data == "Deref":
+        arg0 = generate_expression(tree.children[0], func)
+
+        new_reg = func.request_register()
+
+        if left:
+            func.assign_variable(new_reg, arg0)
+            func.pointer_registers.append(new_reg)
+        else:
+            func.add_line("RW", [new_reg, arg0])
+
+        return new_reg
+
+    elif tree.data == "Cast":
+        arg0 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+        func.register_sizes[new_reg] = utils.get_size_of_type(tree.children[0].data)
+
+        func.assign_variable(new_reg, arg0)
+
+        return new_reg
+
+    # Math Operations
 
     elif tree.data == "Addition":
         arg0 = generate_expression(tree.children[0], func)
@@ -169,8 +208,10 @@ def generate_expression(tree, func):
         func.add_line("DIV", [new_reg, arg0, arg1])
         return new_reg
 
+    # Assignment and Paired Operations
+
     elif tree.data == "Assignment":
-        arg0 = generate_expression(tree.children[0], func)
+        arg0 = generate_expression(tree.children[0], func, True)
         arg1 = generate_expression(tree.children[1], func)
 
         func.assign_variable(arg0, arg1)
@@ -178,7 +219,7 @@ def generate_expression(tree, func):
         return arg1
 
     elif tree.data == "AddEqual":
-        arg0 = generate_expression(tree.children[0], func)
+        arg0 = generate_expression(tree.children[0], func, True)
         arg1 = generate_expression(tree.children[1], func)
 
         new_reg = func.request_register()
@@ -189,7 +230,7 @@ def generate_expression(tree, func):
         return new_reg
 
     elif tree.data == "SubtractEqual":
-        arg0 = generate_expression(tree.children[0], func)
+        arg0 = generate_expression(tree.children[0], func, True)
         arg1 = generate_expression(tree.children[1], func)
 
         new_reg = func.request_register()
@@ -200,7 +241,7 @@ def generate_expression(tree, func):
         return new_reg
 
     elif tree.data == "MultiplyEqual":
-        arg0 = generate_expression(tree.children[0], func)
+        arg0 = generate_expression(tree.children[0], func, True)
         arg1 = generate_expression(tree.children[1], func)
 
         new_reg = func.request_register()
@@ -211,7 +252,7 @@ def generate_expression(tree, func):
         return new_reg
 
     elif tree.data == "DivideEqual":
-        arg0 = generate_expression(tree.children[0], func)
+        arg0 = generate_expression(tree.children[0], func, True)
         arg1 = generate_expression(tree.children[1], func)
 
         new_reg = func.request_register()
@@ -220,6 +261,114 @@ def generate_expression(tree, func):
 
         func.assign_variable(arg0, new_reg)
         return new_reg
+
+    # Comparison Operations
+
+    elif tree.data == "Equal":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("CE", [new_reg, arg0, arg1])
+        return new_reg
+
+    elif tree.data == "NotEqual":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("CNE", [new_reg, arg0, arg1])
+        return new_reg
+
+    elif tree.data == "LessThan":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("CL", [new_reg, arg0, arg1])
+        return new_reg
+
+    elif tree.data == "GreaterThan":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("CNLE", [new_reg, arg0, arg1])
+        return new_reg
+
+    elif tree.data == "LessThanEqual":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("CLE", [new_reg, arg0, arg1])
+        return new_reg
+
+    elif tree.data == "GreaterThanEqual":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("CNL", [new_reg, arg0, arg1])
+        return new_reg
+
+    # Increment and Decrement Ops
+
+    elif tree.data == "PostInc":
+        arg0 = generate_expression(tree.children[0], func, True)
+        arg1 = generate_expression(tree.children[0], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("ADD", [new_reg, arg1, 1])
+
+        func.assign_variable(arg0, new_reg)
+
+        return arg1
+
+    elif tree.data == "PostDec":
+        arg0 = generate_expression(tree.children[0], func, True)
+        arg1 = generate_expression(tree.children[0], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("SUB", [new_reg, arg1, 1])
+
+        func.assign_variable(arg0, new_reg)
+
+        return arg1
+
+    elif tree.data == "PreInc":
+        arg0 = generate_expression(tree.children[0], func, True)
+        arg1 = generate_expression(tree.children[0], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("ADD", [new_reg, arg1, 1])
+
+        func.assign_variable(arg0, new_reg)
+
+        return new_reg
+
+    elif tree.data == "PreDec":
+        arg0 = generate_expression(tree.children[0], func, True)
+        arg1 = generate_expression(tree.children[0], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("SUB", [new_reg, arg1, 1])
+
+        func.assign_variable(arg0, new_reg)
+
+        return new_reg
+
+    # Possibly A Variable
 
     else:
         return func.aliased_registers[tree.data]
@@ -283,6 +432,21 @@ def generate_statement(tree, func):
 
 
         func.place_label(after_label)
+
+    elif tree.data == "While":
+        start_label = func.request_label()
+        skip_label = func.request_label()
+
+        func.place_label(start_label)
+        
+        cond = generate_expression(tree.children[0], func)
+        func.add_conditional_jump("BZ", skip_label, cond)
+
+        generate_statement(tree.children[1], func)
+
+        func.add_jump(start_label)
+        func.place_label(skip_label)
+        
 
 def generate_function(tree):
     arguments = []
