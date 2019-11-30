@@ -433,6 +433,36 @@ def generate_expression(tree, func, left=False):
 
         return new_reg
 
+    elif tree.data == "BitwiseAnd":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("AND", [new_reg, arg0, arg1])
+
+        return new_reg
+
+    elif tree.data == "BitwiseOr":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("OR", [new_reg, arg0, arg1])
+
+        return new_reg
+
+    elif tree.data == "BitwiseXor":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+
+        func.add_line("XOR", [new_reg, arg0, arg1])
+
+        return new_reg
+
     # Logical Operations
 
     elif tree.data == "LogicalNot":
@@ -443,6 +473,32 @@ def generate_expression(tree, func, left=False):
         func.add_line("CNE", [new_reg, arg1, "0"])
         func.add_line("NOT", [new_reg, new_reg])
         
+        return new_reg
+
+    elif tree.data == "LogicalAnd":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+        new_reg1 = func.request_register()
+
+        func.add_line("CNE", [new_reg, arg0, "0"])
+        func.add_line("CNE", [new_reg1, arg1, "0"])
+        func.add_line("AND", [new_reg, new_reg, new_reg1])
+
+        return new_reg
+
+    elif tree.data == "LogicalOr":
+        arg0 = generate_expression(tree.children[0], func)
+        arg1 = generate_expression(tree.children[1], func)
+
+        new_reg = func.request_register()
+        new_reg1 = func.request_register()
+
+        func.add_line("CNE", [new_reg, arg0, "0"])
+        func.add_line("CNE", [new_reg1, arg1, "0"])
+        func.add_line("OR", [new_reg, new_reg, new_reg1])
+
         return new_reg
 
     # Function Call
