@@ -55,6 +55,8 @@ class Function:
 
         self.pointer_registers = []
 
+    def render_name(self):
+        return self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")"
 
     def add_line(self, command, arguments, next_vals=None, include_next=True):
         if next_vals is None:
@@ -92,6 +94,8 @@ class Function:
             else:
                 s = "W"
             self.add_line("W" + s, [reg, other])
+
+            return 
 
         self.add_line("MV" + defines.suffix_by_size[self.register_sizes[reg]], [reg, other])
 
@@ -593,6 +597,7 @@ def generate_expression(tree, func, left=False):
 
     elif tree.data == "FuncCall":
         to_save = func.assigned_registers[:]
+        to_save = [v for v in to_save if v != "R0"]
 
         registers = []
 
