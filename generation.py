@@ -46,14 +46,18 @@ class Function:
 
         self.register_sizes = {}
 
+        self.aliased_registers = {}
         self.return_register = self.request_register()
-        self.aliased_registers = {"__RETURN": self.return_register}
+        self.aliased_registers["__RETURN"] = self.return_register
         self.register_sizes[self.return_register] = utils.get_size_of_type(self.ret_type)
 
         for arg in self.arguments:
             self.define_variable(arg[1], arg[0])
 
         self.pointer_registers = []
+
+    def get_previous_lines(self, line):
+        pass
 
     def render_name(self):
         return self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")"
@@ -83,6 +87,7 @@ class Function:
         self.register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type)
 
     def assign_variable(self, var_name, other):
+        self.add_line("NOP", [])
         if var_name in self.aliased_registers:
             reg = self.aliased_registers[var_name]
         else:
@@ -100,10 +105,20 @@ class Function:
         self.add_line("MV" + defines.suffix_by_size[self.register_sizes[reg]], [reg, other])
 
     def clear_variable(self, var_name):
-        self.add_line("MV", [self.aliased_registers[var_name], "0"])
+        if var_name in self.aliased_registers:
+            reg = self.aliased_registers[var_name]
+        else:
+            reg = var_name
+        
+        self.add_line("MV", [reg, "0"])
 
     def init_variable(self, var_name):
-        self.add_line("INIT", [self.aliased_registers[var_name], "0"])
+        if var_name in self.aliased_registers:
+            reg = self.aliased_registers[var_name]
+        else:
+            reg = var_name
+
+        self.add_line("INIT", [reg, "0"])
 
     def request_register(self):
         if len(self.free_registers) > 0:
@@ -115,6 +130,8 @@ class Function:
             self.assigned_registers.append("R%i" % (self.last_register - 1))
 
         self.register_sizes[self.assigned_registers[-1]] = 4
+
+        self.init_variable(self.assigned_registers[-1])
 
         return self.assigned_registers[-1]
 
@@ -652,7 +669,6 @@ def generate_statement(tree, func):
         var_value = generate_expression(tree.children[2], func)
     
         func.define_variable(var_name, var_type)
-        func.init_variable(var_name)
         func.assign_variable(var_name, var_value)
 
     elif tree.data == "ExprCommand":
