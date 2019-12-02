@@ -3,6 +3,7 @@ import tokenizer
 import parser
 import generation
 import assembly
+import optimize
 
 import utils
 
@@ -18,11 +19,13 @@ tree = parser.parse(tokens)
 
 prog = generation.generate_program(tree)
 
-print(prog)
+optimzied = optimize.optimize(prog)
+
+for p_func, o_func in zip(prog.functions, optimzied.functions):
+    print("\n")
+    utils.compare(str(p_func), str(o_func))
 
 result = assembly.assemble(prog)
-
-print(result)
 
 f = open("result.asm", 'w')
 f.write(result)

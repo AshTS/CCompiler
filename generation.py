@@ -23,7 +23,7 @@ class Line:
 
         return "%03i %s %s %s%s" % (self.i, alias.ljust(10), self.command.rjust(8), 
                                    ", ".join([(str(arg)).rjust(5) for arg in self.arguments]).ljust(20),
-                                   ", ".join([str(n) for n in self.next_vals]))
+                                   (", ".join([str(n) for n in self.next_vals]).ljust(10)))
 
 
 class Function:

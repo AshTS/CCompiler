@@ -58,7 +58,7 @@ def compare(str0, str1):
         lines1 += [""]* (len(lines0) - len(lines1))
 
     for l0, l1 in zip(lines0, lines1):
-        print(l0.ljust(40), "|", l1.ljust(40))
+        print(l0.ljust(60), "|", l1.ljust(60))
 
 
 def get_size_of_type(t):
