@@ -1,35 +1,82 @@
+import utils
+
+
 def optimization_remove_NOP(func):
     to_remove = []
-    prev = {}
-    for line in func.lines.values():
-        for n in line.next_vals:
-            a = func.get_address(n)
 
-            if a in prev:
-                prev[a].append(line.i)
-            else:
-                prev[a] = [line.i]
-
+    # Tag all NOP instructions for removal
     for key in func.lines:
         line = func.lines[key]
-
         if line.command == "NOP":
-            for prev_i in prev[line.i] if line.i in prev else []:
-                new = []
-                for val in func.lines[prev_i].next_vals:
-                    if func.get_address(val) == line.i:
-                        new.append(line.next_vals[0])
-                    else:
-                        new.append(val)
-
-
-                func.lines[prev_i].next_vals = new
-                
             to_remove.append(line.i)
 
+    # Move all addresses pointing to lines to be removed to the next valid line
+    new_address_aliases = {}
+    for address_alias in func.address_aliases:
+        i = func.address_aliases[address_alias]
+        if i not in to_remove:
+            new_address_aliases[address_alias] = i
+        else:
+            new_address_aliases[address_alias] = utils.get_next(i, to_remove, len(func.lines.values()))
+        
+    func.address_aliases = new_address_aliases
+
+    # Fix next pointers which point to now empty lines
+    for line in func.lines.values():
+        new_next = []
+
+        for n in line.next_vals:
+            i = func.get_address(n)
+            if i not in to_remove:
+                new_next.append(n)
+            else:
+                new_i = utils.get_next(i, to_remove, len(func.lines.values()))
+
+                if new_i == utils.get_next(line.i + 1, to_remove, len(func.lines.values())):
+                    new_next.append(new_i)
+                else:
+                    new_next.append(func.get_label_for(new_i))
+
+        line.next_vals = new_next
+
+    # Remove Deleted Lines
     for i in to_remove:
         del func.lines[i]
 
+    # Rename the lines
+    new_lines = {}
+    i = 0
+    for k in sorted(func.lines.keys()):
+        new_lines[k] = i
+        i += 1
+
+    # Move all addresses to the renamed lines
+    new_address_aliases = {}
+    for address_alias in func.address_aliases:
+        i = func.address_aliases[address_alias]
+        new_address_aliases[address_alias] = new_lines[i]
+        
+    func.address_aliases = new_address_aliases
+
+    # Move all lines to the renamed lines
+    new_lines_func = {}
+    
+    for line in func.lines.values():
+        line.i = new_lines[line.i]
+        new_lines_func[line.i] = line
+
+        new_next = []
+
+        for n in line.next_vals:
+            if n in func.address_aliases:
+                new_next.append(n)
+            else:
+                if n in new_lines:
+                    new_next.append(new_lines[n])
+
+        line.next_vals = new_next
+
+    func.lines = new_lines_func
 
     return func
 

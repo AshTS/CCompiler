@@ -16,6 +16,8 @@ JF R15, main_L0
 ADD R15, R0, 1
 J main_ret
 J main_L1
+main_L0:
+main_L1:
 ADD R15, R0, 0
 J main_ret
 main_ret:

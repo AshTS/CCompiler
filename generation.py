@@ -19,7 +19,7 @@ class Line:
 
         for k in self.program.address_aliases:
             if self.program.address_aliases[k] == self.i:
-                alias = k + ":"
+                alias += k + ": "
 
         return "%03i %s %s %s%s" % (self.i, alias.ljust(10), self.command.rjust(8), 
                                    ", ".join([(str(arg)).rjust(5) for arg in self.arguments]).ljust(20),
@@ -74,6 +74,8 @@ class Function:
         else:
             l = self.request_label()
             self.address_aliases[int(i)] = l
+
+            return l
 
     def get_previous_lines(self, line):
         pass

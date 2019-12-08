@@ -72,3 +72,9 @@ def get_size_of_type(t):
         return 1
     elif "void" in t:
         return 0
+
+def get_next(v, to_remove, maximum):
+    while v in to_remove and v < maximum:
+        v += 1
+    
+    return v
