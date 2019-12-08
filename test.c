@@ -6,6 +6,7 @@ int main()
 
     if (a)
     {
+        a = 3;
     }
 
     return 0;

@@ -60,6 +60,30 @@ class Function:
 
         self.pointer_registers = []
 
+    def generate_read_write(self, reg):
+        read = []
+        write = []
+        for line in self.lines.values():
+            # Instructions with no arguments
+            if len(line.arguments) == 0:
+                continue
+
+            # Jump or Branch instructions
+            if line.arguments[0] in self.address_aliases:
+                continue
+
+            if line.arguments[0] == reg:
+                write.append(line.i)
+
+            if reg in line.arguments[1:]:
+                read.append(line.i)
+
+        if reg == "R0":
+            read.append(len(self.lines.values()))
+
+        return read, write
+
+
     def get_address(self, addr):
         if addr in self.address_aliases:
             return self.address_aliases[addr]

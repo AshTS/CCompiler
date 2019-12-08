@@ -10,7 +10,6 @@ main:
 SUB R2, R2, 2
 SW R2, R1
 ADD R1, R0, 0
-ADD R3, R0, 4
 main_L0:
 main_L1:
 ADD R15, R0, 0

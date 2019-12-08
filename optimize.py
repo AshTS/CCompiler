@@ -92,6 +92,16 @@ def optimization_remove_jump_to_next(func):
     return func
 
 
+def optimization_remove_unused_variables(func):
+    for reg in func.assigned_registers + func.free_registers:
+        read, write = func.generate_read_write(reg)
+
+        if len(read) == 0:
+            for i in write:
+                func.lines[i].command = "NOP"
+
+    return func
+
 
 def optimize_function(func):
     last_lines = []
@@ -99,6 +109,7 @@ def optimize_function(func):
     while last_lines != list(func.lines.values()):
         last_lines = list(func.lines.values())
 
+        func = optimization_remove_unused_variables(func)
         func = optimization_remove_jump_to_next(func)
         func = optimization_remove_NOP(func)
 
