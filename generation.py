@@ -35,6 +35,10 @@ class Function:
         self.free_registers = []
         self.last_register = 0
 
+        self.assigned_global = []
+        self.free_global = []
+        self.last_global = 0
+
         self.last_label = 0
 
         self.address_aliases = {}
@@ -55,6 +59,21 @@ class Function:
             self.define_variable(arg[1], arg[0])
 
         self.pointer_registers = []
+
+    def get_address(self, addr):
+        if addr in self.address_aliases:
+            return self.address_aliases[addr]
+
+        return int(addr)
+
+    def get_label_for(self, i):
+        for key in self.address_aliases:
+            if self.address_aliases[key] == i:
+                return key
+
+        else:
+            l = self.request_label()
+            self.address_aliases[int(i)] = l
 
     def get_previous_lines(self, line):
         pass
@@ -84,6 +103,10 @@ class Function:
 
     def define_variable(self, var_name, var_type):
         self.aliased_registers[var_name] = self.request_register()
+        self.register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type)
+
+    def define_global_variable(self, var_name, var_type):
+        self.aliased_registers[var_name] = self.request_global()
         self.register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type)
 
     def assign_variable(self, var_name, other):
@@ -121,6 +144,7 @@ class Function:
         self.add_line("INIT", [reg, "0"])
 
     def request_register(self):
+        self.add_line("NOP", [])
         if len(self.free_registers) > 0:
             v, *self.free_registers = self.free_registers
             self.assigned_registers.append(v)
@@ -135,15 +159,34 @@ class Function:
 
         return self.assigned_registers[-1]
 
+    def request_global(self):
+        self.add_line("NOP", [])
+        if len(self.free_global) > 0:
+            v, *self.free_global = self.free_global
+            self.assigned_global.append(v)
+        else:
+            self.last_global += 1
+
+            self.assigned_global.append("G%i" % (self.last_global - 1))
+
+        self.register_sizes[self.assigned_global[-1]] = 4
+
+        self.init_variable(self.assigned_global[-1])
+
+        return self.assigned_global[-1]
+
     def add_return(self):
+        self.add_line("NOP", [])
         self.address_aliases["ret"] = self.current_line
         self.add_line("RET", [])
 
     def add_jump(self, addr):
+        self.add_line("NOP", [])
         self.add_line("J", [addr], [addr], False)
 
     def add_conditional_jump(self, inst, addr, cond):
         self.add_line(inst, [addr, cond], [addr])
+        self.add_line("NOP", [])
 
         
     def __repr__(self):
@@ -759,9 +802,22 @@ def generate_function(tree):
 def generate_program(tree):
     p = Program()
 
+    start_func = Function("_start", [], "void")
+
     for child in tree.children:
         if child.data == "Function":
             p.add_function(generate_function(child))
+        elif child.data == "GlobalVariable":
+            var_type = child.children[0].data
+            var_name = child.children[1].data
+            var_value = generate_expression(child.children[2], start_func)
+        
+            start_func.define_global_variable(var_name, var_type)
+            start_func.assign_variable(var_name, var_value)
+
+    start_func.add_return()
+
+    p.add_function(start_func)
 
     return p
 

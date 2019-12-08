@@ -2,19 +2,22 @@ X   Enums
 X   Constant Types
 X   Floats
     Unions
-    Intermediate Representation
+X   Intermediate Representation
 X       Line and Program Classes
 X       Function Seperation
 X       Function Generation
 X       Variable Declarations
-        etc.
-    Optimization
-    Generic ASM definition
+X       etc.
+X   Optimization
+X   Generic ASM definition
     Pseudo Linker
 X   Revamp Type Parser
-    Type Checking in Parsing
+X   Type Checking in Parsing
 X   Add Position information to ParseNode's
 X   Array declarations
 X   Struct assignment
 X   Typedef Inligning in Parser
-    Global Variables
+X   Global Variables
+
+URGENT:
+    Fix Undefined Registers using Memory/Stack

@@ -11,6 +11,7 @@ def call_main():
     result += language.move(convert_register("R2"), 0)
     result += language.init_stack()
 
+    result += language.call("_start")
     result += language.call("main")
 
     result += language.jump("__after")

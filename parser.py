@@ -841,14 +841,27 @@ def parse_statement(context):
 def parse_function_def(context):
     children = [parse_type(context), parse_identifier(context)]
 
-    context.add_func(children[1].data)
+    if context.tokens.peek().data == "=":
+        next(context.tokens)
 
-    context.push_scope(Scope())
+        expr = parse_expression(context)
+
+        if not context.tokens.peek().data == ";":
+            report_parse_error("Expected ';' token", context.tokens)
+        else:
+            next(context.tokens)
+
+        return ParseNode("GlobalVariable", children + [expr])
+
 
     if not context.tokens.peek().data == "(":
         report_parse_error("Expected '(' token", context.tokens)
     else:
         next(context.tokens)
+
+    context.add_func(children[1].data)
+
+    context.push_scope(Scope())
 
     while not context.tokens.peek().data == ")":
         children.append(parse_argument(context))

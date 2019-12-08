@@ -17,13 +17,17 @@ tokens = tokenizer.macros(tokens, preprocessor_context)
 
 tree = parser.parse(tokens)
 
+tree.display()
+
 prog = generation.generate_program(tree)
+
+funcs = [str(p) for p in prog.functions]
 
 optimzied = optimize.optimize(prog)
 
-for p_func, o_func in zip(prog.functions, optimzied.functions):
+for p_func, o_func in zip(funcs, optimzied.functions):
     print("\n")
-    utils.compare(str(p_func), str(o_func))
+    utils.compare(p_func, str(o_func))
 
 result = assembly.assemble(prog)
 
