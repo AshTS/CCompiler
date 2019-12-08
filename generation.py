@@ -112,7 +112,6 @@ class Function:
         self.register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type)
 
     def assign_variable(self, var_name, other):
-        self.add_line("NOP", [])
         if var_name in self.aliased_registers:
             reg = self.aliased_registers[var_name]
         else:
@@ -146,7 +145,6 @@ class Function:
         self.add_line("INIT", [reg, "0"])
 
     def request_register(self):
-        self.add_line("NOP", [])
         if len(self.free_registers) > 0:
             v, *self.free_registers = self.free_registers
             self.assigned_registers.append(v)
@@ -162,7 +160,6 @@ class Function:
         return self.assigned_registers[-1]
 
     def request_global(self):
-        self.add_line("NOP", [])
         if len(self.free_global) > 0:
             v, *self.free_global = self.free_global
             self.assigned_global.append(v)
@@ -178,17 +175,14 @@ class Function:
         return self.assigned_global[-1]
 
     def add_return(self):
-        self.add_line("NOP", [])
         self.address_aliases["ret"] = self.current_line
         self.add_line("RET", [])
 
     def add_jump(self, addr):
-        self.add_line("NOP", [])
         self.add_line("J", [addr], [addr], False)
 
     def add_conditional_jump(self, inst, addr, cond):
         self.add_line(inst, [addr, cond], [addr])
-        self.add_line("NOP", [])
 
         
     def __repr__(self):

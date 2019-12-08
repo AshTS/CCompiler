@@ -80,13 +80,27 @@ def optimization_remove_NOP(func):
 
     return func
 
+
+def optimization_remove_jump_to_next(func):
+    for line in func.lines.values():
+        if line.command == "J":
+            if func.get_address(line.next_vals[0]) == line.i + 1:
+                line.command = "NOP"
+        elif line.command.startswith("B"):
+            if func.get_address(line.next_vals[0]) == line.i + 1 and func.get_address(line.next_vals[1]) == line.i + 1:
+                line.command = "NOP"
+    return func
+
+
+
 def optimize_function(func):
     last_lines = []
 
     while last_lines != list(func.lines.values()):
-        func = optimization_remove_NOP(func)
-
         last_lines = list(func.lines.values())
+
+        func = optimization_remove_jump_to_next(func)
+        func = optimization_remove_NOP(func)
 
     return func
 
