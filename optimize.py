@@ -86,7 +86,7 @@ def optimization_remove_jump_to_next(func):
         if line.command == "J":
             if func.get_address(line.next_vals[0]) == line.i + 1:
                 line.command = "NOP"
-        elif line.command.startswith("B"):
+        elif line.command.startswith("B") and line.command != "BACKUP":
             if func.get_address(line.next_vals[0]) == line.i + 1 and func.get_address(line.next_vals[1]) == line.i + 1:
                 line.command = "NOP"
     return func
@@ -116,6 +116,28 @@ def optimize_remove_unreachable_code(func):
     return func
 
 
+def optimize_empty_initalizations(func):
+    for line in func.lines.values():
+        if line.command != "INIT":
+            continue
+
+        paths = func.get_all_paths(line.i)
+
+        reg = line.arguments[0]
+        read, write = func.generate_read_write(reg)
+
+        for path in paths:
+            for p in path[1:]:
+                if p in read:
+                    break
+                if p in write:
+                    if func.lines[p].command == "MV" and not func.lines[p].arguments[1].startswith("G") and not func.lines[p].arguments[1].startswith("R"):
+                        line.arguments[1] = func.lines[p].arguments[1]
+                        func.lines[p].command = "NOP"
+
+    return func
+
+
 def optimize_function(func):
     last_lines = []
 
@@ -124,6 +146,7 @@ def optimize_function(func):
     while last_lines != list(func.lines.values()):
         last_lines = list(func.lines.values())
 
+        func = optimize_empty_initalizations(func)
         func = optimize_remove_unreachable_code(func)
         func = optimization_remove_unused_variables(func)
         func = optimization_remove_jump_to_next(func)

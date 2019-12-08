@@ -23,6 +23,9 @@ prog = generation.generate_program(tree)
 
 funcs = [str(p) for p in prog.functions]
 
+for f in funcs:
+    print(f)
+
 optimzied = optimize.optimize(prog)
 
 for p_func, o_func in zip(funcs, optimzied.functions):

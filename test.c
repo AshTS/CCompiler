@@ -1,16 +1,14 @@
-int main()
+int fact(int a)
 {
-    int a = 4;
-
-    if (a)
+    if (a <= 1)
     {
-        a = 3;
-        return a;
+        return 1;
     }
 
-    return 0;
-    int c = 3 + a;
-    int d = c + 4;
+    return fact(a - 1) * a;
+}
 
-    return d + c;
+int main()
+{
+    return 0;
 }

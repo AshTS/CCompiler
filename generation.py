@@ -32,7 +32,7 @@ class Line:
 
 
 class Function:
-    def __init__(self, name, arguments, ret_type):
+    def __init__(self, name, arguments, ret_type, prog):
         self.current_line = 0
         self.lines = {}
 
@@ -59,6 +59,8 @@ class Function:
         self.return_register = self.request_register()
         self.aliased_registers["__RETURN"] = self.return_register
         self.register_sizes[self.return_register] = utils.get_size_of_type(self.ret_type)
+
+        self.program = prog
 
         for arg in self.arguments:
             self.define_variable(arg[1], arg[0])
@@ -101,9 +103,34 @@ class Function:
         read = []
         write = []
         for line in self.lines.values():
+            if line.command == "CALL":
+                if reg == "R0":
+                    write.append(line.i)
+
+                func = line.arguments[0]
+                num = 1
+
+                for f in self.program.functions:
+                    if f.name == func:
+                        num = len(f.arguments)
+
+                if reg.startswith("R") and int(reg[1:]) > 0 and int(reg[1:]) <= num: #=======================
+                    read.append(line.i)
+
             # Instructions with no arguments
             if len(line.arguments) == 0:
                 continue
+
+            if line.command == "BACKUP":
+                read.append(line.i)
+                continue
+
+            if line.command == "RESTORE":
+                write.append(line.i)
+                continue
+
+            if reg in line.arguments[1:]:
+                read.append(line.i)
 
             # Jump or Branch instructions
             if line.arguments[0] in self.address_aliases:
@@ -112,8 +139,6 @@ class Function:
             if line.arguments[0] == reg:
                 write.append(line.i)
 
-            if reg in line.arguments[1:]:
-                read.append(line.i)
 
         if reg == "R0":
             read.append(len(self.lines.values()))
@@ -254,6 +279,7 @@ class Program:
         self.functions = [] if functions is None else functions
 
     def add_function(self, function):
+        function.program = self
         self.functions.append(function)
 
     def __repr__(self):
@@ -849,7 +875,7 @@ def generate_function(tree):
         if c.data == "Argument":
             arguments.append([c.children[0].data, c.children[1].data])
 
-    f = Function(tree.children[1].data, arguments, tree.children[0].data)
+    f = Function(tree.children[1].data, arguments, tree.children[0].data, None)
 
     generate_statement(tree.children[-1], f)
 
@@ -861,7 +887,7 @@ def generate_function(tree):
 def generate_program(tree):
     p = Program()
 
-    start_func = Function("_start", [], "void")
+    start_func = Function("_start", [], "void", p)
 
     for child in tree.children:
         if child.data == "Function":
