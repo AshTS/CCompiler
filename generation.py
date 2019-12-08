@@ -14,6 +14,11 @@ class Line:
 
         self.program = program
 
+        # Fix Possible argument order issues
+        if len(self.arguments) > 2 and command in ["ADD", "MUL"]:
+            if self.arguments[2].startswith("R") and not self.arguments[1].startswith("R"):
+                self.arguments = [self.arguments[0], self.arguments[2], self.arguments[1]]
+
     def __repr__(self):
         alias = ""
 
@@ -59,6 +64,38 @@ class Function:
             self.define_variable(arg[1], arg[0])
 
         self.pointer_registers = []
+
+    def get_all_paths(self, start):
+        hit = []
+
+        start = self.get_address(start)
+
+        paths = [[start]]
+        heads = [start]
+
+        while len(heads) > 0:
+            heads = []
+
+            new_paths = []
+            for path in paths:
+                if path[-1] not in hit:
+                    heads.append(path[-1])
+
+                    hit.append(path[-1])
+
+                    for n in self.lines[path[-1]].next_vals:
+                        new_path = path + [self.get_address(n)]
+                        new_paths.append(new_path)
+
+                    if len(self.lines[path[-1]].next_vals) == 0:
+                        new_paths.append(path)
+                else:
+                    new_paths.append(path)
+
+            paths = new_paths
+
+        return paths
+
 
     def generate_read_write(self, reg):
         read = []
@@ -225,7 +262,9 @@ class Program:
 
 def generate_expression(tree, func, left=False):
     if tree.data == "Integer":
-        return tree.children[0].data
+        r = func.request_register()
+        func.assign_variable(r, tree.children[0].data)
+        return r
     elif tree.data == "Char":
         return str(ord(tree.children[0].data[1:-1]))
     elif tree.data == "String":

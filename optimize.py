@@ -103,12 +103,28 @@ def optimization_remove_unused_variables(func):
     return func
 
 
+def optimize_remove_unreachable_code(func):
+    paths = func.get_all_paths(0)
+    total = []
+    for p in paths:
+        total += p
+
+    for line in func.lines.values():
+        if line.i not in total:
+            line.command = "NOP"
+
+    return func
+
+
 def optimize_function(func):
     last_lines = []
+
+    func = optimization_remove_NOP(func)
 
     while last_lines != list(func.lines.values()):
         last_lines = list(func.lines.values())
 
+        func = optimize_remove_unreachable_code(func)
         func = optimization_remove_unused_variables(func)
         func = optimization_remove_jump_to_next(func)
         func = optimization_remove_NOP(func)
