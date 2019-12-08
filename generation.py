@@ -80,6 +80,7 @@ class Function:
 
             new_paths = []
             for path in paths:
+                count = 0
                 if path[-1] not in hit:
                     heads.append(path[-1])
 
@@ -103,6 +104,7 @@ class Function:
         read = []
         write = []
         for line in self.lines.values():
+
             if line.command == "CALL":
                 if reg == "R0":
                     write.append(line.i)
@@ -115,6 +117,12 @@ class Function:
                         num = len(f.arguments)
 
                 if reg.startswith("R") and int(reg[1:]) > 0 and int(reg[1:]) <= num: #=======================
+                    read.append(line.i)
+
+                break
+
+            if line.command == "RET":
+                if reg == "R0":
                     read.append(line.i)
 
             # Instructions with no arguments
@@ -138,10 +146,6 @@ class Function:
 
             if line.arguments[0] == reg:
                 write.append(line.i)
-
-
-        if reg == "R0":
-            read.append(len(self.lines.values()))
 
         return read, write
 

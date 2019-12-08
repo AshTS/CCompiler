@@ -138,6 +138,47 @@ def optimize_empty_initalizations(func):
     return func
 
 
+def optimize_unused_writes(func):
+    for line in func.lines.values():
+        if line.command == "RESTORE":
+            continue
+
+        if len(line.arguments) == 0 or not line.arguments[0].startswith("R"):
+            continue
+
+        reg = line.arguments[0]
+        read, write = func.generate_read_write(reg)
+
+        if line.i not in write:
+            continue
+
+        paths = func.get_all_paths(line.i)
+
+        can_replace = True
+
+        for path in paths:
+            for p in path[1:]:
+                if p in read:
+                    can_replace = False
+                if p in write:
+                    break
+
+        if can_replace:
+            print("\n\n")
+            print(func)
+            print(read, write)
+            print(paths)
+            line.command = "NOP"
+
+
+    return func
+
+
+def optimize_backing_up_registers(func):
+
+    return func
+
+
 def optimize_function(func):
     last_lines = []
 
@@ -146,6 +187,8 @@ def optimize_function(func):
     while last_lines != list(func.lines.values()):
         last_lines = list(func.lines.values())
 
+        func = optimize_unused_writes(func)
+        func = optimize_backing_up_registers(func)
         func = optimize_empty_initalizations(func)
         func = optimize_remove_unreachable_code(func)
         func = optimization_remove_unused_variables(func)

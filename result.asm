@@ -10,13 +10,14 @@ fact:
 SUB R2, R2, 2
 SW R2, R1
 ADD R1, R0, 0
+ADD R4, R0, 1
 CLE R5, R3, R4
 CE R15, R5, 0
 JF R15, fact_L0
-ADD R15, R0, R6
 J fact_ret
 fact_L0:
 fact_L1:
+ADD R7, R0, 1
 SUB R8, R3, R7
 ADD R9, R0, R8
 SUB R2, R2, 2
@@ -51,6 +52,7 @@ main:
 SUB R2, R2, 2
 SW R2, R1
 ADD R1, R0, 0
+ADD R3, R0, 0
 ADD R15, R0, R3
 main_ret:
 RW R1, R2
