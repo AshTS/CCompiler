@@ -41,10 +41,16 @@ def assemble_function(func):
             result += language.move(convert_register(line.arguments[0]),
                                     convert_register(line.arguments[1]))
 
+        elif line.command.startswith("INIT"):
+            result += language.move(convert_register(line.arguments[0]),
+                                    convert_register(line.arguments[1]))
+
+
         elif line.command.startswith("W"):
+            cmd = line.command + "W"
             result += language.write_mem(convert_register(line.arguments[0]),
                                          convert_register(line.arguments[1]),
-                                         line.command[1])
+                                         cmd[1])
 
         elif line.command == "ADD":
             result += language.add(convert_register(line.arguments[0]),

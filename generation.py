@@ -59,6 +59,7 @@ class Function:
         self.ret_type = ret_type
 
         self.register_sizes = {}
+        self.pointer_register_sizes = {}
 
         self.aliased_registers = {}
         self.return_register = self.request_register()
@@ -141,6 +142,10 @@ class Function:
                 write.append(line.i)
                 continue
 
+            if line.command in ["W", "WB", "WH"] and reg in line.arguments:
+                read.append(line.i)
+                continue
+
             if reg in line.arguments[1:]:
                 read.append(line.i)
 
@@ -216,11 +221,20 @@ class Function:
                 s = defines.suffix_by_size[self.register_sizes[other]]
             else:
                 s = "W"
+
+            if reg in self.pointer_register_sizes:
+                s = defines.suffix_by_size[self.pointer_register_sizes[reg]]
+
             self.add_line("W" + s, [reg, other])
 
             return 
 
         self.add_line("MV" + defines.suffix_by_size[self.register_sizes[reg]], [reg, other])
+
+        if other in self.pointer_register_sizes:
+            print(self.pointer_register_sizes)
+            self.pointer_register_sizes[reg] = self.pointer_register_sizes[other]
+            print(self.pointer_register_sizes)
 
     def clear_variable(self, var_name):
         if var_name in self.aliased_registers:
@@ -248,6 +262,7 @@ class Function:
             self.assigned_registers.append("R%i" % (self.last_register - 1))
 
         self.register_sizes[self.assigned_registers[-1]] = 4
+        # self.pointer_register_sizes[self.assigned_registers[-1]] = 4
 
         self.init_variable(self.assigned_registers[-1])
 
@@ -322,6 +337,9 @@ def generate_expression(tree, func, left=False):
 
         new_reg = func.request_register()
         func.register_sizes[new_reg] = utils.get_size_of_type(tree.children[0].data)
+
+        if tree.children[0].data.endswith("*"):
+            func.pointer_register_sizes[new_reg] = utils.get_size_of_type(tree.children[0].data[:-1])
 
         func.assign_variable(new_reg, arg0)
 
