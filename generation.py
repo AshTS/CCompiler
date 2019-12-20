@@ -1,5 +1,6 @@
 import utils
 import defines
+import colors
 
 #
 #   Note: For Conversion, This is Little Endian for RAM Storage
@@ -26,9 +27,13 @@ class Line:
             if self.program.address_aliases[k] == self.i:
                 alias += k + ": "
 
-        return "%03i %s %s %s%s" % (self.i, alias.ljust(10), self.command.rjust(8), 
-                                   ", ".join([(str(arg)).rjust(5) for arg in self.arguments]).ljust(20),
-                                   (", ".join([str(n) for n in self.next_vals]).ljust(10)))
+        result =  "%03i %s %s %s%s" % (self.i,
+                                            alias.ljust(10),
+                                            self.command.rjust(8),
+                                            ", ".join([(str(arg)).rjust(5) for arg in self.arguments]).ljust(20),
+                                            (", ".join([str(n) for n in self.next_vals]).ljust(10)))
+
+        return " ".join([colors.render_value(val) for val in result.split(" ")])
 
 
 class Function:
@@ -80,7 +85,6 @@ class Function:
 
             new_paths = []
             for path in paths:
-                count = 0
                 if path[-1] not in hit:
                     heads.append(path[-1])
 
@@ -119,7 +123,7 @@ class Function:
                 if reg.startswith("R") and int(reg[1:]) > 0 and int(reg[1:]) <= num: #=======================
                     read.append(line.i)
 
-                break
+                continue
 
             if line.command == "RET":
                 if reg == "R0":
@@ -129,11 +133,11 @@ class Function:
             if len(line.arguments) == 0:
                 continue
 
-            if line.command == "BACKUP":
+            if line.command == "BACKUP" and line.arguments[0] == reg:
                 read.append(line.i)
                 continue
 
-            if line.command == "RESTORE":
+            if line.command == "RESTORE" and line.arguments[0] == reg:
                 write.append(line.i)
                 continue
 
@@ -276,7 +280,7 @@ class Function:
 
         
     def __repr__(self):
-        return self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")" + ":\n" + "\n".join([str(self.lines[k]) for k in self.lines])
+        return colors.CLEAR + colors.CLEAR + self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")" + ":  \n" + "\n".join([str(self.lines[k]) for k in self.lines])
 
 class Program:
     def __init__(self, functions=None):
@@ -798,10 +802,12 @@ def generate_statement(tree, func):
     elif tree.data == "VariableDeclaration":
         var_type = tree.children[0].data
         var_name = tree.children[1].data
-        var_value = generate_expression(tree.children[2], func)
     
         func.define_variable(var_name, var_type)
-        func.assign_variable(var_name, var_value)
+
+        if len(tree.children) > 2:
+            var_value = generate_expression(tree.children[2], func)
+            func.assign_variable(var_name, var_value)
 
     elif tree.data == "ExprCommand":
         generate_expression(tree.children[0], func)
@@ -878,7 +884,6 @@ def generate_function(tree):
     for c in tree.children[2:]:
         if c.data == "Argument":
             arguments.append([c.children[0].data, c.children[1].data])
-
     f = Function(tree.children[1].data, arguments, tree.children[0].data, None)
 
     generate_statement(tree.children[-1], f)

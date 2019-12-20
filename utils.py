@@ -50,6 +50,8 @@ def check_float(data):
 
 
 def compare(str0, str1):
+    SIZE = 60
+
     str0, str1 = str(str0), str(str1)
     lines0, lines1 = str0.split("\n"), str1.split("\n")
     if len(lines0) < len(lines1):
@@ -58,7 +60,7 @@ def compare(str0, str1):
         lines1 += [""]* (len(lines0) - len(lines1))
 
     for l0, l1 in zip(lines0, lines1):
-        print(l0.ljust(60), "|", l1.ljust(60))
+        print(l0.ljust(SIZE), "|", l1)
 
 
 def get_size_of_type(t):

@@ -4,7 +4,6 @@ import parser
 import generation
 import assembly
 import optimize
-
 import utils
 
 input_file_name = "test.c"
@@ -17,14 +16,9 @@ tokens = tokenizer.macros(tokens, preprocessor_context)
 
 tree = parser.parse(tokens)
 
-tree.display()
-
 prog = generation.generate_program(tree)
 
 funcs = [str(p) for p in prog.functions]
-
-for f in funcs:
-    print(f)
 
 optimzied = optimize.optimize(prog)
 
@@ -32,7 +26,7 @@ for p_func, o_func in zip(funcs, optimzied.functions):
     print("\n")
     utils.compare(p_func, str(o_func))
 
-result = assembly.assemble(prog)
+result = assembly.assemble(optimzied)
 
 f = open("result.asm", 'w')
 f.write(result)
