@@ -39,6 +39,7 @@ if "o" in options:
 settings.DISPLAY_ASM = "A" in options.keys()
 settings.DISPLAY_OPTIMIZATION = "O" in options.keys()
 settings.DISPLAY_TREE = "t" in options.keys()
+settings.DISPLAY_INTERMEDIATE = "I" in options.keys()
 
 preprocessed, line_map, preprocessor_context = preprocessor.preprocess(input_file_data, input_file_name)
 
@@ -60,6 +61,11 @@ if settings.DISPLAY_OPTIMIZATION:
     for p_func, o_func in zip(funcs, optimzied.functions):
         print("\n")
         utils.compare(p_func, str(o_func))
+
+if settings.DISPLAY_INTERMEDIATE and not settings.DISPLAY_OPTIMIZATION:
+    for func in optimzied.functions:
+        print("")
+        print(str(func))
 
 result = assembly.assemble(optimzied)
 
