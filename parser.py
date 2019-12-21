@@ -851,6 +851,8 @@ def parse_function_def(context):
         else:
             next(context.tokens)
 
+        context.add_var(children[1].data, children[0].data)
+
         return ParseNode("GlobalVariable", children + [expr])
 
 
