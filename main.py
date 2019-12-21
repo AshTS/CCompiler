@@ -16,6 +16,7 @@ current = ""
 for val in sys.argv[1:]:
     if val.startswith("-"):
         current = val[1:]
+        options[current] = []
     else:
         if current in options:
             options[current].append(val)
@@ -35,9 +36,9 @@ input_file_data = open(input_file_name, "r").read()
 if "o" in options:
     output_file_name = options["o"][0]
 
-settings.DISPLAY_ASM = "-A" in options
-settings.DISPLAY_OPTIMIZATION = "-O" in options
-settings.DISPLAY_TREE = "-t" in options
+settings.DISPLAY_ASM = "A" in options.keys()
+settings.DISPLAY_OPTIMIZATION = "O" in options.keys()
+settings.DISPLAY_TREE = "t" in options.keys()
 
 preprocessed, line_map, preprocessor_context = preprocessor.preprocess(input_file_data, input_file_name)
 
