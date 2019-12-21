@@ -1,17 +1,14 @@
-int a = 65;
-
-int update_display()
+int fact0(int a)
 {
-    *((char*)0x7FFF) = 1;
+    if (a < 2)
+    {
+        return 1;
+    }
+    
+    return a * fact0(a - 1);
 }
 
-int place_char(char c)
+int fact1(int a)
 {
-    *((char*)0x8000) = c;
-}
-
-int main()
-{
-    place_char(a);
-    update_display();
+    return (a < 2) ? 1 : a * fact1(a - 1);
 }

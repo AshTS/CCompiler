@@ -11,7 +11,7 @@ global_register_aliases = {}
 class Line:
     def __init__(self, command, arguments, i, next_vals, program):
         self.command = command
-        self.arguments = arguments
+        self.arguments = [str(a) for a in arguments]
         self.i = i
         self.next_vals = next_vals
 

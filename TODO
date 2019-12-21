@@ -24,3 +24,6 @@ URGENT:
     Strings stored in binary
     Appropriate references to Strings in assembly
     Usage of Structs
+
+ERRORS:
+    Ternerary factorial compiling poorly

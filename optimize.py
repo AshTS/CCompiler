@@ -188,16 +188,20 @@ def optimize_backing_up_registers(func):
             while not (func.lines[i].command == "RESTORE" and func.lines[i].arguments == line.arguments):
                 i += 1
 
-            reads, _ = func.generate_read_write(line.arguments[0])
+            reads, writes = func.generate_read_write(line.arguments[0])
 
             paths = func.get_all_paths(i)
 
             is_read_later = False
 
             for path in paths:
-                for p in path:
+                for p in path[1:]:
+                    if p in writes:
+                        break
                     if p in reads:
-                        is_read_later = True
+                        if func.lines[p].command != "BACKUP":
+                            is_read_later = True
+                            break
 
             if not is_read_later:
                 line.command = "NOP"
