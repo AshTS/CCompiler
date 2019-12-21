@@ -130,12 +130,16 @@ def optimize_empty_initalizations(func):
         reg = line.arguments[0]
         read, write = func.generate_read_write(reg)
 
+        inited_after = []
+
         for path in paths:
             for p in path[1:]:
+                if func.lines[p].command == "INIT":
+                    inited_after.append(func.lines[p].arguments[0])
                 if p in read:
                     break
                 if p in write:
-                    if func.lines[p].command == "MV" and not func.lines[p].arguments[1].startswith("G") and not func.lines[p].arguments[1].startswith("R"):
+                    if func.lines[p].command == "MV" and func.lines[p].arguments[1] not in inited_after:
                         line.arguments[1] = func.lines[p].arguments[1]
                         func.lines[p].command = "NOP"
                         func.lines[p].arguments = []
@@ -202,8 +206,37 @@ def optimize_backing_up_registers(func):
                 func.lines[i].command = "NOP"
                 func.lines[i].arguments = []
 
+    return func
 
-        pass
+
+def optimize_move_chain(func):
+    for line in func.lines.values():
+        if line.command not in ["INIT", "MV"]:
+            continue
+        
+        paths = func.get_all_paths(line.i)
+
+        reg = line.arguments[0]
+        val = line.arguments[1]
+        read, write = func.generate_read_write(reg)
+
+        inited_after = []
+
+        if val.startswith("R") or val.startswith("G"):
+            continue
+
+        for path in paths:
+            for p in path[1:]:
+                if func.lines[p].command == "INIT":
+                    inited_after.append(func.lines[p].arguments[0])
+                if p in read:
+                    if func.lines[p].command in ["INIT", "MV"]:
+                        if len(func.lines[p].arguments) > 1 and func.lines[p].arguments[1] == reg:
+                            func.lines[p].arguments[1] = val
+                if p in write:
+                    break
+
+
     return func
 
 
@@ -216,6 +249,9 @@ def optimize_function(func):
         last_lines = list(func.lines.values())
 
         func = optimize_backing_up_registers(func)
+        func = optimization_remove_NOP(func)
+
+        func = optimize_move_chain(func)
         func = optimization_remove_NOP(func)
 
         func = optimize_empty_initalizations(func)

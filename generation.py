@@ -6,6 +6,8 @@ import colors
 #   Note: For Conversion, This is Little Endian for RAM Storage
 #
 
+global_register_aliases = {}
+
 class Line:
     def __init__(self, command, arguments, i, next_vals, program):
         self.command = command
@@ -69,7 +71,7 @@ class Function:
         self.program = prog
 
         for arg in self.arguments:
-            self.define_variable(arg[1], arg[0])
+            self.define_variable(arg[1], arg[0], True)
 
         self.pointer_registers = []
 
@@ -202,8 +204,8 @@ class Function:
         self.address_aliases[label] = self.current_line
         return label
 
-    def define_variable(self, var_name, var_type):
-        self.aliased_registers[var_name] = self.request_register()
+    def define_variable(self, var_name, var_type, is_arg=False):
+        self.aliased_registers[var_name] = self.request_register(is_arg)
         self.register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type)
 
     def define_global_variable(self, var_name, var_type):
@@ -232,9 +234,7 @@ class Function:
         self.add_line("MV" + defines.suffix_by_size[self.register_sizes[reg]], [reg, other])
 
         if other in self.pointer_register_sizes:
-            print(self.pointer_register_sizes)
             self.pointer_register_sizes[reg] = self.pointer_register_sizes[other]
-            print(self.pointer_register_sizes)
 
     def clear_variable(self, var_name):
         if var_name in self.aliased_registers:
@@ -252,7 +252,7 @@ class Function:
 
         self.add_line("INIT", [reg, "0"])
 
-    def request_register(self):
+    def request_register(self, is_arg=False):
         if len(self.free_registers) > 0:
             v, *self.free_registers = self.free_registers
             self.assigned_registers.append(v)
@@ -264,7 +264,8 @@ class Function:
         self.register_sizes[self.assigned_registers[-1]] = 4
         # self.pointer_register_sizes[self.assigned_registers[-1]] = 4
 
-        self.init_variable(self.assigned_registers[-1])
+        if not is_arg:
+            self.init_variable(self.assigned_registers[-1])
 
         return self.assigned_registers[-1]
 
@@ -800,7 +801,10 @@ def generate_expression(tree, func, left=False):
     # Possibly A Variable
 
     else:
-        return func.aliased_registers[tree.data]
+        if tree.data in func.aliased_registers:
+            return func.aliased_registers[tree.data]
+        else:
+            return global_register_aliases[tree.data]
 
 
 def generate_statement(tree, func):
@@ -927,8 +931,12 @@ def generate_program(tree):
             start_func.define_global_variable(var_name, var_type)
             start_func.assign_variable(var_name, var_value)
 
-    start_func.add_return()
+            for v in start_func.aliased_registers:
+                if start_func.aliased_registers[v].startswith("G"):
+                    global_register_aliases[v] = start_func.aliased_registers[v]
 
+    start_func.add_return()
+    
     p.add_function(start_func)
 
     return p
