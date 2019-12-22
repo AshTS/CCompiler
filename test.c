@@ -1,4 +1,4 @@
-int fact0(int a)
+/*int fact0(int a)
 {
     if (a < 2)
     {
@@ -6,9 +6,10 @@ int fact0(int a)
     }
     
     return a * fact0(a - 1);
-}
+}*/
 
 int fact1(int a)
 {
-    return (a < 2) ? 1 : a * fact1(a - 1);
+    // return (a < 2) ? 1 : a * fact1(a - 1);
+    return a ? 1 : 0;
 }

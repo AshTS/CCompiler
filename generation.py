@@ -293,10 +293,9 @@ class Function:
 
     def add_conditional_jump(self, inst, addr, cond):
         self.add_line(inst, [addr, cond], [addr])
-
         
     def __repr__(self):
-        return colors.CLEAR + colors.CLEAR + self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")" + ":  \n" + "\n".join([str(self.lines[k]) for k in self.lines])
+        return self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")" + ":  \n" + "\n".join([str(self.lines[k]) for k in self.lines])
 
 class Program:
     def __init__(self, functions=None):

@@ -1,3 +1,5 @@
+import settings
+
 CLEAR = u"\u001b[0m"
 
 YELLOW = u"\u001b[33;1m"
@@ -14,11 +16,15 @@ def change_color(color):
 
     if color != __CURRENT__:
         __CURRENT__ = color
-        print(color)
+        if settings.USE_COLORS:
+            print(color)
 
 
 def render_value(val):
     val = str(val)
+
+    if not settings.USE_COLORS:
+        return val
 
     if val == "":
         return val
