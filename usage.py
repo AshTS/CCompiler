@@ -9,3 +9,5 @@ def usage():
     usage_entry("-t", "Outputs the parse tree to the console")
     usage_entry("-I", "Outputs post-optimization intermediate code to console")
     usage_entry("-C", "Disables Colored Output")
+    usage_entry("-c", "Show incremental optimization changes")
+    usage_entry("-cf", "Show finer grain optimization changes")

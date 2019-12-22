@@ -41,6 +41,8 @@ settings.DISPLAY_OPTIMIZATION = "O" in options.keys()
 settings.DISPLAY_TREE = "t" in options.keys()
 settings.DISPLAY_INTERMEDIATE = "I" in options.keys()
 settings.USE_COLORS = "C" not in options.keys()
+settings.SHOW_INCREMENTAL_CHANGES = "c" in options.keys()
+settings.SHOW_FINE_CHANGES = "cf" in options.keys()
 
 preprocessed, line_map, preprocessor_context = preprocessor.preprocess(input_file_data, input_file_name)
 

@@ -1,4 +1,5 @@
 import utils
+import settings
 
 
 def optimization_remove_NOP(func):
@@ -132,6 +133,8 @@ def optimize_empty_initalizations(func):
 
         inited_after = []
 
+        possible = []
+
         for path in paths:
             for p in path[1:]:
                 if func.lines[p].command == "INIT":
@@ -140,9 +143,15 @@ def optimize_empty_initalizations(func):
                     break
                 if p in write:
                     if func.lines[p].command == "MV" and func.lines[p].arguments[1] not in inited_after:
-                        line.arguments[1] = func.lines[p].arguments[1]
-                        func.lines[p].command = "NOP"
-                        func.lines[p].arguments = []
+                        possible.append(p)
+                    break
+
+        if len(possible) == 1:
+            p = possible[0]
+            
+            line.arguments[1] = func.lines[p].arguments[1]
+            func.lines[p].command = "NOP"
+            func.lines[p].arguments = []
 
     return func
 
@@ -231,6 +240,8 @@ def optimize_move_chain(func):
 
         for path in paths:
             for p in path[1:]:
+                if len(func.get_all_previous(p)) > 1:
+                    break
                 if func.lines[p].command == "INIT":
                     inited_after.append(func.lines[p].arguments[0])
                 if p in read:
@@ -249,32 +260,34 @@ def optimize_function(func):
 
     func = optimization_remove_NOP(func)
 
+    optimizations = [(optimize_backing_up_registers, "Optimize Backing up Registers"),
+                     (optimize_move_chain, "Optimize Move Chaining"),
+                     (optimize_empty_initalizations, "Remove Empty Initalizations"),
+                     (optimize_unused_writes, "Remove Unused Writes"),
+                     (optimize_remove_unreachable_code, "Remove Unreachable Code"),
+                     (optimization_remove_unused_variables, "Remove Unused Variables"),
+                     (optimization_remove_jump_to_next, "Remove Jumps to next Instruction")]
+
     while last_lines != list(func.lines.values()):
+        orig = str(func)
         last_lines = list(func.lines.values())
 
-        func = optimize_backing_up_registers(func)
-        func = optimization_remove_NOP(func)
+        for optimization, name in optimizations:
+            if settings.SHOW_FINE_CHANGES:
+                last = str(func)
 
-        func = optimize_move_chain(func)
-        func = optimization_remove_NOP(func)
+            func = optimization(func)
+            func = optimization_remove_NOP(func)
 
-        func = optimize_empty_initalizations(func)
-        func = optimization_remove_NOP(func)
+            if settings.SHOW_FINE_CHANGES:
+                new = str(func)
 
-        func = optimize_unused_writes(func)
-        func = optimization_remove_NOP(func)
+                if last != new:
+                    print("\n\nCurrent: %s" % name)
+                    utils.compare(last, str(func))
 
-        func = optimize_backing_up_registers(func)
-        func = optimization_remove_NOP(func)
-
-        func = optimize_remove_unreachable_code(func)
-        func = optimization_remove_NOP(func)
-
-        func = optimization_remove_unused_variables(func)
-        func = optimization_remove_NOP(func)
-
-        func = optimization_remove_jump_to_next(func)
-        func = optimization_remove_NOP(func)
+        if settings.SHOW_INCREMENTAL_CHANGES:
+            utils.compare(orig, str(func))
 
     return func
 

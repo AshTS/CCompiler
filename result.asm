@@ -10,9 +10,16 @@ fact1:
 SUB R2, R2, 2
 SW R2, R1
 ADD R1, R0, 0
-ADD R15, R0, 1
+ADD R15, R0, 0
+ADD R4, R0, 0
+CE R15, R3, 0
+JF R15, fact1_L1
+ADD R4, R0, 1
+J fact1_L0
 fact1_L1:
+ADD R4, R0, 0
 fact1_L0:
+ADD R15, R0, R4
 fact1_ret:
 RW R1, R2
 ADD R2, R2, 2

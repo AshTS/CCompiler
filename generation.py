@@ -75,6 +75,15 @@ class Function:
 
         self.pointer_registers = []
 
+    def get_all_previous(self, i):
+        result = []
+
+        for line in self.lines.values():
+            if i in [self.get_address(l) for l in line.next_vals]:
+                result.append(line.i)
+
+        return result
+
     def get_all_paths(self, start):
         hit = []
 
