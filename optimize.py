@@ -251,6 +251,35 @@ def optimize_move_chain(func):
                 if p in write:
                     break
 
+    return func
+
+
+def optimize_reduce_registers(func):
+    used = [0] + [i + 1 for i in range(len(func.arguments))]
+    
+    for line in func.lines.values():
+        for arg in line.arguments:
+            if arg.startswith("R"):
+                if int(arg[1:]) not in used:
+                    used.append(int(arg[1:]))
+    
+    new_registers = {}
+    current = 0
+
+    for reg in sorted(used):
+        new_registers["R%i" % reg] = "R%i" % current
+        current += 1
+
+    for line in func.lines.values():
+        new_args = []
+
+        for arg in line.arguments:
+            if arg in new_registers:
+                new_args.append(new_registers[arg])
+            else:
+                new_args.append(arg)
+
+        line.arguments = new_args
 
     return func
 
@@ -266,7 +295,8 @@ def optimize_function(func):
                      (optimize_unused_writes, "Remove Unused Writes"),
                      (optimize_remove_unreachable_code, "Remove Unreachable Code"),
                      (optimization_remove_unused_variables, "Remove Unused Variables"),
-                     (optimization_remove_jump_to_next, "Remove Jumps to next Instruction")]
+                     (optimization_remove_jump_to_next, "Remove Jumps to next Instruction"),
+                     (optimize_reduce_registers, "Reduce Register Usage")]
 
     while last_lines != list(func.lines.values()):
         orig = str(func)
