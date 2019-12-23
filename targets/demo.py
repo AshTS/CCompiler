@@ -12,6 +12,8 @@ register_mapping = {"R0": "R15",
 "R11": "R13",
 "R12": "R14"}
 
+STRING_DATA_OFFSET = 16
+
 def jump(addr):
     return "J %s\n" % addr
 
@@ -46,12 +48,16 @@ def compare(result, arg0, arg1, comparison):
     return "C%s %s, %s, %s\n" % (comparison.upper(), result, arg0, arg1)
 
 def add(result, arg0, arg1):
+    if not arg0.startswith("R"):
+        return "ADD %s, %s, %s\n" % (result, arg1, arg0)
     return "ADD %s, %s, %s\n" % (result, arg0, arg1)
 
 def sub(result, arg0, arg1):
     return "SUB %s, %s, %s\n" % (result, arg0, arg1)
 
 def mul(result, arg0, arg1):
+    if not arg0.startswith("R"):
+        return "ADD %s, %s, %s\n" % (result, arg1, arg0)
     return "MUL %s, %s, %s\n" % (result, arg0, arg1)
 
 def div(result, arg0, arg1):
@@ -80,3 +86,11 @@ def pop_ret():
 
 def init_stack():
     return move("R2", 0x1000)
+
+def add_data(data):
+    result = "~"
+    
+    for d in data:
+        result += " %02X" % d
+
+    return result

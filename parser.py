@@ -982,4 +982,6 @@ def parse(tokens):
 
     result = parse_file(context)
 
-    return result
+    # print(context.all_strings)
+
+    return result, context

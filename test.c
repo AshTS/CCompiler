@@ -1,44 +1,30 @@
-void update_display()
-{
-    *((char*)0x7FFF) = 1;
-}
+#include "display.h"
 
-void put_char(char val)
+char fib(int n)
 {
-    char x = *((char*)0x7000);
-    char y = *((char*)0x7001);
-    *((char*)(0x8000 + y * 128 + x * 2)) = val;
-
-    *((char*)0x7000) = x + 1;
-}
-
-void clear_display()
-{
-    *((char*)0x7000) = 0; //X
-    *((char*)0x7001) = 0; //Y
-    
-    int i = 0;
-    while (i < 1024)
+    if (n < 2)
     {
-        put_char(' ');
-        i++;
+        return 1;
     }
 
-    *((char*)0x7000) = 0; //X
-    *((char*)0x7001) = 0; //Y
+    return fib(n - 1) + fib(n - 2);
 }
 
 int main()
 {
-    *((char*)0x7000) = 0; //X
-    *((char*)0x7001) = 0; //Y
-
     clear_display();
-    put_char('H');
-    put_char('e');
-    put_char('l');
-    put_char('l');
-    put_char('o');
-    update_display();
+
+    print("Fibonacci\n");
+
+    char i = 0;
+    while (i < 10)
+    {
+        print_number(fib(i));
+        put_char('\n');
+        i += 1;
+    }
+
+    while (1);
+
     return 0;
 }

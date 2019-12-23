@@ -4,6 +4,9 @@ def convert_register(r):
     if r in language.register_mapping:
         return language.register_mapping[r]
 
+    if r.startswith("S("):
+        return str(int(r[2:-1]) + language.STRING_DATA_OFFSET)
+
     if r.startswith("R"):
         print("NEED MORE REGISTERS!")
 
@@ -102,6 +105,8 @@ def assemble_function(func):
 
 def assemble(prog):
     result = call_main()
+
+    result += language.add_data(prog.string_data)
 
     for func in prog.functions:
         result += "\n" + language.comment(func.render_name())

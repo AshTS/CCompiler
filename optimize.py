@@ -101,8 +101,9 @@ def optimization_remove_unused_variables(func):
         
         if len(read) == 0:
             for i in write:
-                func.lines[i].command = "NOP"
-                func.lines[i].arguments = []
+                if func.lines[i].command != "CALL": 
+                    func.lines[i].command = "NOP"
+                    func.lines[i].arguments = []
 
     return func
 
@@ -129,7 +130,7 @@ def optimize_empty_initalizations(func):
         paths = func.get_all_paths(line.i)
 
         reg = line.arguments[0]
-        read, write = func.generate_read_write(reg)
+        read, write = func.generate_read_write(reg, True)
 
         inited_after = []
 
@@ -143,7 +144,8 @@ def optimize_empty_initalizations(func):
                     break
                 if p in write:
                     if func.lines[p].command == "MV" and func.lines[p].arguments[1] not in inited_after:
-                        possible.append(p)
+                        if p not in possible:
+                            possible.append(p)
                     break
 
         if len(possible) == 1:
@@ -206,7 +208,8 @@ def optimize_backing_up_registers(func):
             for path in paths:
                 for p in path[1:]:
                     if p in writes:
-                        break
+                        if func.lines[p].command != "RESTORE":
+                            break
                     if p in reads:
                         if func.lines[p].command != "BACKUP":
                             is_read_later = True
@@ -224,7 +227,7 @@ def optimize_backing_up_registers(func):
 
 def optimize_move_chain(func):
     for line in func.lines.values():
-        if line.command not in ["INIT", "MV"]:
+        if line.command not in ["INIT", "MV", "MVB", "MVH"]:
             continue
         
         paths = func.get_all_paths(line.i)
@@ -247,7 +250,7 @@ def optimize_move_chain(func):
                     if func.lines[p].command == "INIT":
                         inited_after.append(func.lines[p].arguments[0])
                     if p in read:
-                        if func.lines[p].command in ["INIT", "MV"]:
+                        if func.lines[p].command in ["INIT", "MV", "MVB", "MVH"]:
                             if len(func.lines[p].arguments) > 1 and func.lines[p].arguments[1] == reg:
                                 func.lines[p].arguments[1] = val
                     if p in write:
@@ -262,9 +265,11 @@ def optimize_move_chain(func):
                     if func.lines[p].command == "INIT":
                         inited_after.append(func.lines[p].arguments[0])
                     if p in read:
-                        if func.lines[p].command in ["INIT", "MV"]:
+                        if func.lines[p].command in ["INIT", "MV", "ADD", "SUB", "MUL", "DIV", "MVB", "MVH"]:
                             if len(func.lines[p].arguments) > 1 and func.lines[p].arguments[1] == reg:
                                 func.lines[p].arguments[1] = val
+                            if len(func.lines[p].arguments) > 2 and func.lines[p].arguments[2] == reg:
+                                func.lines[p].arguments[2] = val
                     if p in write:
                         break
 
@@ -362,23 +367,22 @@ def optimize_single_use(func):
 
 
 def optimize_function(func):
-    last_lines = []
+    orig = ""
 
     func = optimization_remove_NOP(func)
 
-    optimizations = [(optimize_backing_up_registers, "Optimize Backing up Registers"),
+    optimizations = [(optimize_empty_initalizations, "Remove Empty Initalizations"),
+                     (optimize_backing_up_registers, "Optimize Backing up Registers"),
                      (optimize_move_chain, "Optimize Move Chaining"),
-                     (optimize_empty_initalizations, "Remove Empty Initalizations"),
                      (optimize_unused_writes, "Remove Unused Writes"),
                      (optimize_remove_unreachable_code, "Remove Unreachable Code"),
                      (optimization_remove_unused_variables, "Remove Unused Variables"),
                      (optimization_remove_jump_to_next, "Remove Jumps to next Instruction"),
                      (optimize_single_use, "Allow Reuse of Single Use Variables"),
                      (optimize_reduce_registers, "Reduce Register Usage")]
-
-    while last_lines != list(func.lines.values()):
+    
+    while str(func) != orig:
         orig = str(func)
-        last_lines = list(func.lines.values())
 
         for optimization, name in optimizations:
             if settings.SHOW_FINE_CHANGES:

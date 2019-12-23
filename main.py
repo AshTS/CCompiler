@@ -49,12 +49,12 @@ preprocessed, line_map, preprocessor_context = preprocessor.preprocess(input_fil
 tokens = tokenizer.tokenize(preprocessed, line_map, input_file_name)
 tokens = tokenizer.macros(tokens, preprocessor_context)
 
-tree = parser.parse(tokens)
+tree, context = parser.parse(tokens)
 
 if settings.DISPLAY_TREE:
     tree.display()
 
-prog = generation.generate_program(tree)
+prog = generation.generate_program(tree, context)
 
 funcs = [str(p) for p in prog.functions]
 

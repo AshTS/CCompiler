@@ -116,13 +116,15 @@ class Function:
         return paths
 
 
-    def generate_read_write(self, reg):
+    def generate_read_write(self, reg, include_call_as_write=False):
         read = []
         write = []
         for line in self.lines.values():
 
             if line.command == "CALL":
-                if reg == "R0":
+                if include_call_as_write:
+                    write.append(line.i)
+                elif reg == "R0":
                     write.append(line.i)
 
                 func = line.arguments[0]
@@ -307,8 +309,9 @@ class Function:
         return self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")" + ":  \n" + "\n".join([str(self.lines[k]) for k in self.lines])
 
 class Program:
-    def __init__(self, functions=None):
+    def __init__(self, functions=None, string_data=""):
         self.functions = [] if functions is None else functions
+        self.string_data = [ord(c) for c in string_data]
 
     def add_function(self, function):
         function.program = self
@@ -326,7 +329,7 @@ def generate_expression(tree, func, left=False):
     elif tree.data == "Char":
         return str(ord(tree.children[0].data[1:-1]))
     elif tree.data == "String":
-        return tree.children[1].data
+        return "S(%s)" % tree.children[1].data
 
     elif tree.data == "Deref":
         arg0 = generate_expression(tree.children[0], func)
@@ -926,8 +929,8 @@ def generate_function(tree):
     return f
 
 
-def generate_program(tree):
-    p = Program()
+def generate_program(tree, context):
+    p = Program(string_data=context.all_strings)
 
     start_func = Function("_start", [], "void", p)
 
