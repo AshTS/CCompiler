@@ -4,12 +4,13 @@ def convert_register(r):
     if r in language.register_mapping:
         return language.register_mapping[r]
 
+    if r.startswith("R"):
+        print("NEED MORE REGISTERS!")
+
     return r
 
 def call_main():
-    result = language.move(convert_register("R1"), 0)
-    result += language.move(convert_register("R2"), 0)
-    result += language.init_stack()
+    result = language.init_stack()
 
     result += language.call("_start")
     result += language.call("main")
@@ -51,6 +52,13 @@ def assemble_function(func):
             result += language.write_mem(convert_register(line.arguments[0]),
                                          convert_register(line.arguments[1]),
                                          cmd[1])
+
+        elif line.command in ["R", "RB", "RW", "RH"]:
+            cmd = line.command + "W"
+            result += language.read_mem(convert_register(line.arguments[0]),
+                                        convert_register(line.arguments[1]),
+                                        cmd[1])
+
 
         elif line.command == "ADD":
             result += language.add(convert_register(line.arguments[0]),

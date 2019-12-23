@@ -36,6 +36,12 @@ def write_mem(addr, val, size):
 
     return "S%s %s, %s\n" % (size, addr, val)
 
+def read_mem(addr, val, size):
+    if size in ["H", "W"]:
+        size = "W"
+
+    return "R%s %s, %s\n" % (size, addr, val)
+
 def compare(result, arg0, arg1, comparison):
     return "C%s %s, %s, %s\n" % (comparison.upper(), result, arg0, arg1)
 

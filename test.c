@@ -1,22 +1,44 @@
-int fact0(int a)
+void update_display()
 {
-    if (a < 2)
-    {
-        return 1;
-    }
+    *((char*)0x7FFF) = 1;
+}
+
+void put_char(char val)
+{
+    char x = *((char*)0x7000);
+    char y = *((char*)0x7001);
+    *((char*)(0x8000 + y * 128 + x * 2)) = val;
+
+    *((char*)0x7000) = x + 1;
+}
+
+void clear_display()
+{
+    *((char*)0x7000) = 0; //X
+    *((char*)0x7001) = 0; //Y
     
-    return a * fact0(a - 1);
+    int i = 0;
+    while (i < 1024)
+    {
+        put_char(' ');
+        i++;
+    }
+
+    *((char*)0x7000) = 0; //X
+    *((char*)0x7001) = 0; //Y
 }
 
-int fact1(int a)
+int main()
 {
-    return (a < 2) ? 1 : a * fact1(a - 1);
-}
+    *((char*)0x7000) = 0; //X
+    *((char*)0x7001) = 0; //Y
 
-int nouse(int a)
-{
-    int c = 1;
-    int d = c;
-    int b = d;
-    return b;
+    clear_display();
+    put_char('H');
+    put_char('e');
+    put_char('l');
+    put_char('l');
+    put_char('o');
+    update_display();
+    return 0;
 }

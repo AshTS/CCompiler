@@ -80,3 +80,11 @@ def get_next(v, to_remove, maximum):
         v += 1
     
     return v
+
+
+def overlap(set0, set1):
+    for v in set0:
+        if v in set1:
+            return True
+
+    return False

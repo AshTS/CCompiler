@@ -337,7 +337,10 @@ def generate_expression(tree, func, left=False):
             func.assign_variable(new_reg, arg0)
             func.pointer_registers.append(new_reg)
         else:
-            func.add_line("RW", [new_reg, arg0])
+            s = "W"
+            if arg0 in func.pointer_register_sizes:
+                s = defines.suffix_by_size[func.pointer_register_sizes[arg0]]
+            func.add_line("R" + s, [new_reg, arg0])
 
         return new_reg
 

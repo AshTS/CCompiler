@@ -236,20 +236,37 @@ def optimize_move_chain(func):
         inited_after = []
 
         if val.startswith("R") or val.startswith("G"):
-            continue
+            _, arg_writes = func.generate_read_write(val)
 
-        for path in paths:
-            for p in path[1:]:
-                if len(func.get_all_previous(p)) > 1:
-                    break
-                if func.lines[p].command == "INIT":
-                    inited_after.append(func.lines[p].arguments[0])
-                if p in read:
-                    if func.lines[p].command in ["INIT", "MV"]:
-                        if len(func.lines[p].arguments) > 1 and func.lines[p].arguments[1] == reg:
-                            func.lines[p].arguments[1] = val
-                if p in write:
-                    break
+            for path in paths:
+                for p in path[1:]:
+                    if len(func.get_all_previous(p)) > 1:
+                        break
+                    if p in arg_writes:
+                        break
+                    if func.lines[p].command == "INIT":
+                        inited_after.append(func.lines[p].arguments[0])
+                    if p in read:
+                        if func.lines[p].command in ["INIT", "MV"]:
+                            if len(func.lines[p].arguments) > 1 and func.lines[p].arguments[1] == reg:
+                                func.lines[p].arguments[1] = val
+                    if p in write:
+                        break
+        else:
+            # Numeric Values
+
+            for path in paths:
+                for p in path[1:]:
+                    if len(func.get_all_previous(p)) > 1:
+                        break
+                    if func.lines[p].command == "INIT":
+                        inited_after.append(func.lines[p].arguments[0])
+                    if p in read:
+                        if func.lines[p].command in ["INIT", "MV"]:
+                            if len(func.lines[p].arguments) > 1 and func.lines[p].arguments[1] == reg:
+                                func.lines[p].arguments[1] = val
+                    if p in write:
+                        break
 
     return func
 
@@ -284,6 +301,66 @@ def optimize_reduce_registers(func):
     return func
 
 
+def optimize_single_use(func):
+    single_uses = []
+    for reg in func.assigned_registers + func.free_registers:
+        if int(reg[1:]) <= len(func.arguments):
+            continue
+    
+        read, write = func.generate_read_write(reg)
+        
+        if len(read) == 1 and len(write) == 1:
+            single_uses.append((reg, read[0], write[0]))
+
+    domains = {}
+
+    for use in single_uses:
+        paths = func.get_all_paths(use[2])
+
+        domain = []
+
+        for path in paths:
+            for p in path:
+                if p == use[1]:
+                    break
+
+                if p not in domain:
+                    domain.append(p)
+
+        domains[use[0]] = domain
+
+    replacements = {}
+
+    # Find the Replacements here
+    for r in domains:
+        for r2 in domains:
+            if r == r2:
+                continue
+
+            if r2 in replacements:
+                continue
+
+            if r in replacements:
+                continue
+
+            if not utils.overlap(domains[r], domains[r2]):
+                replacements[r2] = r
+                domains[r] += domains[r2]
+                
+    for line in func.lines.values():
+        new_arguments = []
+
+        for arg in line.arguments:
+            if arg in replacements:
+                new_arguments.append(replacements[arg])
+            else:
+                new_arguments.append(arg)
+
+        line.arguments = new_arguments
+
+    return func
+
+
 def optimize_function(func):
     last_lines = []
 
@@ -296,6 +373,7 @@ def optimize_function(func):
                      (optimize_remove_unreachable_code, "Remove Unreachable Code"),
                      (optimization_remove_unused_variables, "Remove Unused Variables"),
                      (optimization_remove_jump_to_next, "Remove Jumps to next Instruction"),
+                     (optimize_single_use, "Allow Reuse of Single Use Variables"),
                      (optimize_reduce_registers, "Reduce Register Usage")]
 
     while last_lines != list(func.lines.values()):
