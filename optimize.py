@@ -143,7 +143,7 @@ def optimize_empty_initalizations(func):
                 if p in read:
                     break
                 if p in write:
-                    if func.lines[p].command == "MV" and func.lines[p].arguments[1] not in inited_after:
+                    if func.lines[p].command in ["MV", "MVB", "MVH"] and func.lines[p].arguments[1] not in inited_after:
                         if p not in possible:
                             possible.append(p)
                     break
@@ -305,34 +305,13 @@ def optimize_reduce_registers(func):
 
     return func
 
-
 def optimize_single_use(func):
-    single_uses = []
+    domains = {}
     for reg in func.assigned_registers + func.free_registers:
         if int(reg[1:]) <= len(func.arguments):
             continue
     
-        read, write = func.generate_read_write(reg)
-        
-        if len(read) == 1 and len(write) == 1:
-            single_uses.append((reg, read[0], write[0]))
-
-    domains = {}
-
-    for use in single_uses:
-        paths = func.get_all_paths(use[2])
-
-        domain = []
-
-        for path in paths:
-            for p in path:
-                if p == use[1]:
-                    break
-
-                if p not in domain:
-                    domain.append(p)
-
-        domains[use[0]] = domain
+        domains[reg] = func.get_domain_for(reg)
 
     replacements = {}
 
@@ -364,7 +343,6 @@ def optimize_single_use(func):
         line.arguments = new_arguments
 
     return func
-
 
 def optimize_function(func):
     orig = ""

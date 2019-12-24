@@ -75,6 +75,37 @@ class Function:
 
         self.pointer_registers = []
 
+    def get_domain_for(self, reg):
+        domain = []
+
+        read, write = self.generate_read_write(reg)
+
+        for w in write:
+            paths = self.get_all_paths(w)
+            
+            for path in paths:
+                last = [w]
+                current = [w]
+
+                for p in path[1:]:
+                    current.append(p)
+                    if p in read:
+                        last = current[:]
+
+                    if p in write:
+                        domain += last
+                        break
+                else:
+                    domain += last
+
+        final_domain = []
+
+        for i in domain:
+            if i not in final_domain:
+                final_domain.append(i)
+
+        return final_domain
+
     def get_all_previous(self, i):
         result = []
 
