@@ -899,9 +899,9 @@ def generate_statement(tree, func):
             elif child.data == "ElseIf":
                 else_label = func.request_label()
 
-                func.add_conditional_jump("BZ", else_label, cond)
-
                 cond = generate_expression(child.children[0], func)
+
+                func.add_conditional_jump("BZ", else_label, cond)
 
                 generate_statement(child.children[1], func)
 
