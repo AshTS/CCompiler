@@ -1,4 +1,4 @@
-#include "display.h"
+/*#include "display.h"
 
 char fib(int n)
 {
@@ -10,9 +10,9 @@ char fib(int n)
     return fib(n - 1) + fib(n - 2);
 }
 
-char ack(int m, int n)
+int ack(int m, int n)
 {
-    char answer;
+    int answer;
     if (m == 0)
     {
         answer = n + 1;
@@ -26,7 +26,7 @@ char ack(int m, int n)
         answer = ack(m - 1, ack(m, n-1));
     }
     
-    return (char)answer;
+    return answer;
 }
 
 int main()
@@ -35,22 +35,23 @@ int main()
 
     print("Ackerman\n");
 
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
-            print("Ackerman of ");
-            print_number((char)i);
-            print(" and ");
-            print_number((char)j);
-            print(" is: ");
-            print_number(ack(i, j));
-            put_char('\n');
-        }
-    }
-    
+    int i = 4;
+    int j = 1;
+
+    print("Ackerman of ");
+    print_number(i);
+    print(" and ");
+    print_number(j);
+    print(" is: ");
+    print_number(ack(i, j));
+    put_char('\n');
 
     while (1);
 
     return 0;
+}*/
+
+int main()
+{
+    // int data[10];
 }

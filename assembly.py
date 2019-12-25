@@ -13,7 +13,7 @@ def convert_register(r):
     return r
 
 def call_main():
-    result = language.init_stack()
+    result = language.initalize()
 
     result += language.call("_start")
     result += language.call("main")

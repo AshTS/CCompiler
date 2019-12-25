@@ -66,8 +66,36 @@ void print(char* data)
     update_display();
 }
 
-void print_number(unsigned char num)
+void print_number(unsigned short num)
 {
+    if (num > 99999)
+    {
+        put_char('0' + num / 100000);
+    }
+
+    num -= (num / 100000) * 100000;
+
+    if (num > 9999)
+    {
+        put_char('0' + num / 10000);
+    }
+
+    num -= (num / 10000) * 10000;
+
+    if (num > 999)
+    {
+        put_char('0' + num / 1000);
+    }
+
+    num -= (num / 1000) * 1000;
+
+    if (num > 99)
+    {
+        put_char('0' + num / 100);
+    }
+
+    num -= (num / 100) * 100;
+
     if (num > 9)
     {
         put_char('0' + num / 10);
