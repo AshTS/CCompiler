@@ -334,189 +334,19 @@ ADD R1, R0, 0
 ADD R13, R0, 0
 JL R1, clear_display
 ADD R3, R0, R13
-ADD R4, R0, 0
-ADD R3, R0, 0
-ADD R3, R4, 0
-ADD R5, R0, 3
-SB R3, R5
-ADD R3, R0, 0
-ADD R3, R4, 1
-ADD R5, R0, 1
-SB R3, R5
-ADD R3, R0, 0
-ADD R3, R4, 2
-ADD R5, R0, 2
-SB R3, R5
-ADD R3, R0, 0
-main_L0:
-ADD R5, R0, 4
-ADD R6, R0, 0
-CL R6, R3, R5
-CE R15, R6, 0
-JF R15, main_L1
-ADD R5, R0, 0
-ADD R5, R4, R3
-RB R5, R5
-SUB R2, R2, 2
-SW R2, R4
-SUB R2, R2, 2
-SW R2, R3
-ADD R3, R0, R5
-JL R1, print_number
-RW R3, R2
-ADD R2, R2, 2
-RW R4, R2
-ADD R2, R2, 2
-SUB R2, R2, 2
-SW R2, R4
-SUB R2, R2, 2
-SW R2, R3
-ADD R3, R0, 32
-JL R1, put_char
-RW R3, R2
-ADD R2, R2, 2
-RW R4, R2
-ADD R2, R2, 2
-ADD R5, R0, 0
-ADD R5, R3, 1
-ADD R3, R0, R5
-J main_L0
-main_L1:
-SUB R2, R2, 2
-SW R2, R4
-ADD R3, R0, 10
-JL R1, put_char
-RW R4, R2
-ADD R2, R2, 2
-SUB R2, R2, 2
-SW R2, R4
-ADD R3, R0, R4
+ADD R3, R0, 5
 ADD R4, R0, 3
-JL R1, bubble_sort
-RW R4, R2
-ADD R2, R2, 2
-ADD R3, R0, 0
-main_L2:
-ADD R5, R0, 4
-ADD R6, R0, 0
-CL R6, R3, R5
-CE R15, R6, 0
-JF R15, main_L3
 ADD R5, R0, 0
-ADD R5, R4, R3
-RB R5, R5
-SUB R2, R2, 2
-SW R2, R4
-SUB R2, R2, 2
-SW R2, R3
 ADD R3, R0, R5
 JL R1, print_number
-RW R3, R2
-ADD R2, R2, 2
-RW R4, R2
-ADD R2, R2, 2
-SUB R2, R2, 2
-SW R2, R4
-SUB R2, R2, 2
-SW R2, R3
-ADD R3, R0, 32
-JL R1, put_char
-RW R3, R2
-ADD R2, R2, 2
-RW R4, R2
-ADD R2, R2, 2
-ADD R5, R0, 0
-ADD R5, R3, 1
-ADD R3, R0, R5
-J main_L2
-main_L3:
-main_L4:
+main_L0:
 ADD R3, R0, 1
 CE R15, R3, 0
-JF R15, main_L5
-J main_L4
-main_L5:
+JF R15, main_L1
+J main_L0
+main_L1:
 ADD R13, R0, 0
 main_ret:
-RW R1, R2
-ADD R2, R2, 2
-J R1
-
-
-# char bubble_sort(char* array, int size)
-bubble_sort:
-SUB R2, R2, 2
-SW R2, R1
-ADD R1, R0, 0
-ADD R13, R0, 0
-ADD R5, R0, 2
-ADD R6, R0, 0
-CL R6, R4, R5
-CE R15, R6, 0
-JF R15, bubble_sort_L0
-ADD R13, R0, 0
-J bubble_sort_ret
-bubble_sort_L0:
-bubble_sort_L1:
-ADD R5, R0, 1
-ADD R6, R0, 0
-bubble_sort_L2:
-ADD R7, R0, 0
-SUB R7, R4, 1
-ADD R8, R0, 0
-CL R8, R6, R7
-CE R15, R8, 0
-JF R15, bubble_sort_L3
-ADD R5, R0, 0
-ADD R5, R3, R6
-RB R5, R5
-ADD R7, R0, 0
-ADD R7, R6, 1
-ADD R8, R0, 0
-ADD R8, R3, R7
-RB R8, R8
-ADD R7, R0, 0
-CNLE R7, R5, R8
-CE R15, R7, 0
-JF R15, bubble_sort_L4
-ADD R5, R0, 0
-ADD R5, R0, 0
-ADD R5, R6, 1
-ADD R7, R0, 0
-ADD R7, R3, R5
-RB R7, R7
-ADD R5, R0, R7
-ADD R7, R0, 0
-ADD R7, R6, 1
-ADD R8, R0, 0
-ADD R8, R3, R7
-ADD R7, R0, 0
-ADD R7, R3, R6
-RB R7, R7
-SB R8, R7
-ADD R7, R0, 0
-ADD R7, R3, R6
-SB R7, R5
-ADD R5, R0, 0
-bubble_sort_L4:
-bubble_sort_L5:
-ADD R7, R0, 0
-ADD R7, R6, 1
-ADD R6, R0, R7
-J bubble_sort_L2
-bubble_sort_L3:
-CE R15, R5, 0
-JF R15, bubble_sort_L6
-ADD R13, R0, 0
-J bubble_sort_ret
-bubble_sort_L6:
-ADD R5, R0, R3
-ADD R6, R0, R4
-ADD R3, R0, R5
-ADD R4, R0, R6
-JL R1, bubble_sort
-bubble_sort_L7:
-bubble_sort_ret:
 RW R1, R2
 ADD R2, R2, 2
 J R1

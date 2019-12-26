@@ -62,6 +62,41 @@ def assemble_function(func):
                                         convert_register(line.arguments[1]),
                                         cmd[1])
 
+        elif line.command == "RLL":
+            result += language.rotate_left_logical(convert_register(line.arguments[0]),
+                                                   convert_register(line.arguments[1]),
+                                                   convert_register(line.arguments[2]))
+
+        elif line.command == "RLA":
+            result += language.rotate_left_arithmatic(convert_register(line.arguments[0]),
+                                                      convert_register(line.arguments[1]),
+                                                      convert_register(line.arguments[2]))
+
+        elif line.command == "RRL":
+            result += language.rotate_right_logical(convert_register(line.arguments[0]),
+                                                    convert_register(line.arguments[1]),
+                                                    convert_register(line.arguments[2]))
+
+        elif line.command == "RRA":
+            result += language.rotate_right_arithmatic(convert_register(line.arguments[0]),
+                                                       convert_register(line.arguments[1]),
+                                                       convert_register(line.arguments[2]))
+
+
+        elif line.command == "AND":
+            result += language.and_(convert_register(line.arguments[0]),
+                                   convert_register(line.arguments[1]),
+                                   convert_register(line.arguments[2]))
+
+        elif line.command == "OR":
+            result += language.or_(convert_register(line.arguments[0]),
+                                   convert_register(line.arguments[1]),
+                                   convert_register(line.arguments[2]))
+
+        elif line.command == "XOR":
+            result += language.xor_(convert_register(line.arguments[0]),
+                                   convert_register(line.arguments[1]),
+                                   convert_register(line.arguments[2]))
 
         elif line.command == "ADD":
             result += language.add(convert_register(line.arguments[0]),

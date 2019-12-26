@@ -54,6 +54,40 @@ def compare(result, arg0, arg1, comparison):
     return "C%s %s, %s, %s\n" % (comparison.upper(), result, arg0, arg1)
 
 
+def rotate_left_logical(result, arg0, arg1):
+    return "RLL %s, %s, %s\n" % (result, arg0, arg1)
+
+
+def rotate_left_arithmatic(result, arg0, arg1):
+    return "RLA %s, %s, %s\n" % (result, arg0, arg1)
+
+
+def rotate_right_logical(result, arg0, arg1):
+    return "RLL %s, %s, %s\n" % (result, arg0, arg1)
+
+
+def rotate_right_arithmatic(result, arg0, arg1):
+    return "RLA %s, %s, %s\n" % (result, arg0, arg1)
+
+
+def and_(result, arg0, arg1):
+    if not arg0.startswith("R"):
+        return "AND %s, %s, %s\n" % (result, arg1, arg0)
+    return "AND %s, %s, %s\n" % (result, arg0, arg1)
+
+
+def or_(result, arg0, arg1):
+    if not arg0.startswith("R"):
+        return "OR %s, %s, %s\n" % (result, arg1, arg0)
+    return "OR %s, %s, %s\n" % (result, arg0, arg1)
+
+
+def xor_(result, arg0, arg1):
+    if not arg0.startswith("R"):
+        return "XOR %s, %s, %s\n" % (result, arg1, arg0)
+    return "XOR %s, %s, %s\n" % (result, arg0, arg1)
+
+
 def add(result, arg0, arg1):
     if not arg0.startswith("R"):
         return "ADD %s, %s, %s\n" % (result, arg1, arg0)
