@@ -165,7 +165,7 @@ class Function:
                     if f.name == func:
                         num = len(f.arguments)
 
-                if reg.startswith("R") and int(reg[1:]) > 0 and int(reg[1:]) <= num: #=======================
+                if reg.startswith("R") and int(reg[1:]) > 0 and int(reg[1:]) <= num: 
                     read.append(line.i)
 
                 continue
@@ -250,9 +250,16 @@ class Function:
         self.aliased_registers[var_name] = self.request_register(is_arg)
         self.register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type)
 
+        if var_type.endswith("*"):
+            self.pointer_register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type[:-1])
+
     def define_global_variable(self, var_name, var_type):
         self.aliased_registers[var_name] = self.request_global()
         self.register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type)
+
+        if var_type.endswith("*"):
+            self.pointer_register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type[:-1])
+
 
     def assign_variable(self, var_name, other):
         if var_name in self.aliased_registers:
@@ -345,11 +352,21 @@ class Program:
         self.string_data = [ord(c) for c in string_data]
 
     def add_function(self, function):
+        self.functions = [func for func in self.functions if func.name != function.name]
+
         function.program = self
         self.functions.append(function)
 
     def __repr__(self):
         return "\n\n".join([str(f) for f in self.functions])
+
+
+def update_pointer_register_sizes(func, reg0, reg1):
+    reg0 = reg0 if reg0 not in func.aliased_registers else func.aliased_registers[reg0]
+    reg1 = reg1 if reg1 not in func.aliased_registers else func.aliased_registers[reg1]
+
+    if reg1 in func.pointer_register_sizes:
+        func.pointer_register_sizes[reg0] = func.pointer_register_sizes[reg1]
 
 
 def generate_expression(tree, func, left=False):
@@ -400,6 +417,10 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("ADD", [new_reg, arg0, arg1])
+
+        update_pointer_register_sizes(func, new_reg, arg0)
+        update_pointer_register_sizes(func, new_reg, arg1)
+
         return new_reg
 
     elif tree.data == "Subtraction":
@@ -409,6 +430,10 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("SUB", [new_reg, arg0, arg1])
+
+        update_pointer_register_sizes(func, new_reg, arg0)
+        update_pointer_register_sizes(func, new_reg, arg1)
+
         return new_reg
 
     elif tree.data == "Multiply":
@@ -418,6 +443,10 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("MUL", [new_reg, arg0, arg1])
+
+        update_pointer_register_sizes(func, new_reg, arg0)
+        update_pointer_register_sizes(func, new_reg, arg1)
+        
         return new_reg
 
     elif tree.data == "Divide":
@@ -427,6 +456,10 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("DIV", [new_reg, arg0, arg1])
+
+        update_pointer_register_sizes(func, new_reg, arg0)
+        update_pointer_register_sizes(func, new_reg, arg1)
+        
         return new_reg
 
     # Assignment and Paired Operations
@@ -654,10 +687,15 @@ def generate_expression(tree, func, left=False):
 
         func.add_line("ADD", [new_reg, arg0, arg1])
 
+        update_pointer_register_sizes(func, new_reg, arg0)
+
         if left:
             func.pointer_registers.append(new_reg)
         else:
-            func.add_line("RW", [new_reg, new_reg])
+            s = "W"
+            if new_reg in func.pointer_register_sizes:
+                s = defines.suffix_by_size[func.pointer_register_sizes[new_reg]]
+            func.add_line("R" + s, [new_reg, new_reg])
 
         return new_reg
 
@@ -872,7 +910,14 @@ def generate_statement(tree, func):
     
         func.define_variable(var_name, var_type)
 
-        if len(tree.children) > 2:
+        if len(tree.children) > 3 and tree.children[3].data != "":
+            reg = func.aliased_registers[var_name]
+
+            type_size = utils.get_size_of_type(var_type[:-1])
+
+            func.add_line("ALLOC", [reg, int(tree.children[3].children[0].children[0].data) * type_size])
+
+        elif len(tree.children) > 2:
             var_value = generate_expression(tree.children[2], func)
             func.assign_variable(var_name, var_value)
 

@@ -1,6 +1,7 @@
 import utils
 import settings
 
+import time
 
 def optimization_remove_NOP(func):
     to_remove = []
@@ -193,34 +194,48 @@ def optimize_unused_writes(func):
 
 def optimize_backing_up_registers(func):
     for line in func.lines.values():
-        if line.command == "BACKUP":
-            i = line.i
+        if line.command != "BACKUP":
+            continue
 
-            while not (func.lines[i].command == "RESTORE" and func.lines[i].arguments == line.arguments):
-                i += 1
+        i = line.i
 
-            reads, writes = func.generate_read_write(line.arguments[0])
+        while not (func.lines[i].command == "RESTORE" and func.lines[i].arguments == line.arguments):
+            i += 1
 
-            paths = func.get_all_paths(i)
+        reg = line.arguments[0]
 
-            is_read_later = False
+        reads, writes = func.generate_read_write(reg)
 
-            for path in paths:
-                for p in path[1:]:
-                    if p in writes:
-                        if func.lines[p].command != "RESTORE":
-                            break
-                    if p in reads:
-                        if func.lines[p].command != "BACKUP":
+        paths = func.get_all_paths(i)
+
+        is_read_later = False
+
+        is_in_ignored_segment = False
+
+        for path in paths:
+            for p in path[1:]:
+                if p in reads:
+                    if func.lines[p].command != "BACKUP":
+                        if not is_in_ignored_segment:
                             is_read_later = True
                             break
+                    else:
+                        if func.lines[p].arguments[0] == reg:
+                            is_in_ignored_segment = True
+                if p in writes:
+                    if func.lines[p].command != "RESTORE":
+                        if not is_in_ignored_segment:
+                            break
+                    else:
+                        if func.lines[p].arguments[0] == reg:
+                            is_in_ignored_segment = False
 
-            if not is_read_later:
-                line.command = "NOP"
-                line.arguments = []
+        if not is_read_later:
+            line.command = "NOP"
+            line.arguments = []
 
-                func.lines[i].command = "NOP"
-                func.lines[i].arguments = []
+            func.lines[i].command = "NOP"
+            func.lines[i].arguments = []
 
     return func
 
@@ -344,20 +359,21 @@ def optimize_single_use(func):
 
     return func
 
+
 def optimize_function(func):
     orig = ""
 
     func = optimization_remove_NOP(func)
 
-    optimizations = [(optimize_empty_initalizations, "Remove Empty Initalizations"),
+    optimizations = [(optimize_reduce_registers, "Reduce Register Usage"),
+                     (optimize_empty_initalizations, "Remove Empty Initalizations"),
                      (optimize_backing_up_registers, "Optimize Backing up Registers"),
                      (optimize_move_chain, "Optimize Move Chaining"),
                      (optimize_unused_writes, "Remove Unused Writes"),
                      (optimize_remove_unreachable_code, "Remove Unreachable Code"),
                      (optimization_remove_unused_variables, "Remove Unused Variables"),
                      (optimization_remove_jump_to_next, "Remove Jumps to next Instruction"),
-                     (optimize_single_use, "Allow Reuse of Single Use Variables"),
-                     (optimize_reduce_registers, "Reduce Register Usage")]
+                     (optimize_single_use, "Allow Reuse of Single Use Variables")]
     
     while str(func) != orig:
         orig = str(func)

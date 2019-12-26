@@ -1,57 +1,66 @@
-/*#include "display.h"
+#include "display.h"
 
-char fib(int n)
-{
-    if (n < 2)
-    {
-        return 1;
-    }
-
-    return fib(n - 1) + fib(n - 2);
-}
-
-int ack(int m, int n)
-{
-    int answer;
-    if (m == 0)
-    {
-        answer = n + 1;
-    }
-    else if (n == 0)
-    {
-        answer = ack(m - 1, 1);
-    }
-    else
-    {
-        answer = ack(m - 1, ack(m, n-1));
-    }
-    
-    return answer;
-}
+char bubble_sort(char* array, int size);
 
 int main()
 {
     clear_display();
 
-    print("Ackerman\n");
+    char data[3];
 
-    int i = 4;
-    int j = 1;
+    data[0] = 3;
+    data[1] = 1;
+    data[2] = 2;
 
-    print("Ackerman of ");
-    print_number(i);
-    print(" and ");
-    print_number(j);
-    print(" is: ");
-    print_number(ack(i, j));
+    for (int i = 0; i < 4; i++)
+    {
+        print_number((int)data[i]);
+        put_char(' ');
+    }
+
     put_char('\n');
 
+    bubble_sort(data, 3);
+
+    for (int i = 0; i < 4; i++)
+    {
+        print_number((int)data[i]);
+        put_char(' ');
+    }
+    
     while (1);
 
     return 0;
-}*/
+}
 
-int main()
+
+char bubble_sort(char* array, int size)
 {
-    // int data[10];
+    if (size < 2)
+    {
+        return 0;
+    }
+
+    char is_sorted = 1;
+
+    for (int i = 0; i < size - 1; i++)
+    {
+        if (array[i] > array[i + 1])
+        {
+            char temp = array[i + 1];
+            array[i + 1] = array[i];
+            array[i] = temp;
+            is_sorted = 0;
+        }
+    }
+
+    if (is_sorted)
+    {
+        return 0;
+    }
+    else
+    {
+        bubble_sort(array, size);
+    }
+    
 }

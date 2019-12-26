@@ -21,7 +21,7 @@ X   Global Variables
 
 URGENT:
     Fix Undefined Registers using Memory/Stack
-    Strings stored in binary
-    Appropriate references to Strings in assembly
     Usage of Structs
-    Compress Registers
+
+OPTIMZIATIONS:
+    Speed up path generation
