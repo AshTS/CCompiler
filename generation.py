@@ -1,6 +1,7 @@
 import utils
 import defines
 import colors
+import structdata
 
 #
 #   Note: For Conversion, This is Little Endian for RAM Storage
@@ -46,6 +47,9 @@ class Function:
         self.assigned_registers = []
         self.free_registers = []
         self.last_register = 0
+
+        self.registers_for_consts = []
+        self.registers_to_ignore = []
 
         self.assigned_global = []
         self.free_global = []
@@ -342,20 +346,31 @@ class Function:
 
     def add_conditional_jump(self, inst, addr, cond):
         self.add_line(inst, [addr, cond], [addr])
+
+    def throw_consts(self):
+        for const in self.registers_for_consts:
+            if const not in self.registers_to_ignore:
+                self.registers_to_ignore.append(const)
         
     def __repr__(self):
         return self.ret_type + " " + self.name + "(" + ", ".join(["%s %s" % tuple(v) for v in self.arguments]) + ")" + ":  \n" + "\n".join([str(self.lines[k]) for k in self.lines])
+
 
 class Program:
     def __init__(self, functions=None, string_data=""):
         self.functions = [] if functions is None else functions
         self.string_data = [ord(c) for c in string_data]
 
+        self.struct_data = {}
+
     def add_function(self, function):
         self.functions = [func for func in self.functions if func.name != function.name]
 
         function.program = self
         self.functions.append(function)
+
+    def add_struct(self, name, struct):
+        self.struct_data[name] = struct
 
     def __repr__(self):
         return "\n\n".join([str(f) for f in self.functions])
@@ -373,6 +388,7 @@ def generate_expression(tree, func, left=False):
     if tree.data == "Integer":
         r = func.request_register()
         func.assign_variable(r, tree.children[0].data)
+        func.registers_for_consts.append(r)
         return r
     elif tree.data == "Char":
         return str(ord(tree.children[0].data[1:-1]))
@@ -421,6 +437,8 @@ def generate_expression(tree, func, left=False):
         update_pointer_register_sizes(func, new_reg, arg0)
         update_pointer_register_sizes(func, new_reg, arg1)
 
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "Subtraction":
@@ -434,6 +452,8 @@ def generate_expression(tree, func, left=False):
         update_pointer_register_sizes(func, new_reg, arg0)
         update_pointer_register_sizes(func, new_reg, arg1)
 
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "Multiply":
@@ -446,6 +466,8 @@ def generate_expression(tree, func, left=False):
 
         update_pointer_register_sizes(func, new_reg, arg0)
         update_pointer_register_sizes(func, new_reg, arg1)
+
+        func.registers_for_consts.append(new_reg)
         
         return new_reg
 
@@ -459,6 +481,8 @@ def generate_expression(tree, func, left=False):
 
         update_pointer_register_sizes(func, new_reg, arg0)
         update_pointer_register_sizes(func, new_reg, arg1)
+
+        func.registers_for_consts.append(new_reg)
         
         return new_reg
 
@@ -580,6 +604,9 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("CE", [new_reg, arg0, arg1])
+
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "NotEqual":
@@ -589,6 +616,9 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("CNE", [new_reg, arg0, arg1])
+
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "LessThan":
@@ -598,6 +628,9 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("CL", [new_reg, arg0, arg1])
+
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "GreaterThan":
@@ -607,6 +640,9 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("CNLE", [new_reg, arg0, arg1])
+
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "LessThanEqual":
@@ -616,6 +652,9 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("CLE", [new_reg, arg0, arg1])
+
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "GreaterThanEqual":
@@ -625,6 +664,9 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("CNL", [new_reg, arg0, arg1])
+
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     # Increment and Decrement Ops
@@ -724,6 +766,8 @@ def generate_expression(tree, func, left=False):
 
         func.add_line("RLL", [new_reg, arg0, arg1])
 
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "ShiftRight":
@@ -733,6 +777,8 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("RLL", [new_reg, arg0, arg1])
+
+        func.registers_for_consts.append(new_reg)
 
         return new_reg
 
@@ -745,6 +791,8 @@ def generate_expression(tree, func, left=False):
 
         func.add_line("NOT", [new_reg, arg1])
 
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "BitwiseAnd":
@@ -754,6 +802,8 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("AND", [new_reg, arg0, arg1])
+
+        func.registers_for_consts.append(new_reg)
 
         return new_reg
 
@@ -765,6 +815,8 @@ def generate_expression(tree, func, left=False):
 
         func.add_line("OR", [new_reg, arg0, arg1])
 
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "BitwiseXor":
@@ -774,6 +826,8 @@ def generate_expression(tree, func, left=False):
         new_reg = func.request_register()
 
         func.add_line("XOR", [new_reg, arg0, arg1])
+
+        func.registers_for_consts.append(new_reg)
 
         return new_reg
 
@@ -786,6 +840,8 @@ def generate_expression(tree, func, left=False):
 
         func.add_line("CNE", [new_reg, arg1, "0"])
         func.add_line("NOT", [new_reg, new_reg])
+
+        func.registers_for_consts.append(new_reg)
         
         return new_reg
 
@@ -800,6 +856,9 @@ def generate_expression(tree, func, left=False):
         func.add_line("CNE", [new_reg1, arg1, "0"])
         func.add_line("AND", [new_reg, new_reg, new_reg1])
 
+        func.attempt_free_register(new_reg1)
+        func.registers_for_consts.append(new_reg)
+
         return new_reg
 
     elif tree.data == "LogicalOr":
@@ -812,6 +871,9 @@ def generate_expression(tree, func, left=False):
         func.add_line("CNE", [new_reg, arg0, "0"])
         func.add_line("CNE", [new_reg1, arg1, "0"])
         func.add_line("OR", [new_reg, new_reg, new_reg1])
+
+        func.attempt_free_register(new_reg1)
+        func.registers_for_consts.append(new_reg)
 
         return new_reg
 
@@ -852,7 +914,7 @@ def generate_expression(tree, func, left=False):
 
     elif tree.data == "FuncCall":
         to_save = func.assigned_registers[:]
-        to_save = [v for v in to_save if v != "R0"]
+        to_save = [v for v in to_save if v != "R0" and v not in func.registers_to_ignore]
 
         registers = []
 
@@ -860,6 +922,7 @@ def generate_expression(tree, func, left=False):
         for child in tree.children[1:]:
             v = generate_expression(child, func)
             r = func.request_register()
+            func.registers_for_consts.append(r)
             func.add_line("MV", [r, v])
             registers.append(r)
 
@@ -904,6 +967,7 @@ def generate_statement(tree, func):
             func.clear_variable("__RETURN")
             
         func.add_jump("ret")
+
     elif tree.data == "VariableDeclaration":
         var_type = tree.children[0].data
         var_name = tree.children[1].data
@@ -988,6 +1052,8 @@ def generate_statement(tree, func):
 
         func.add_jump(start_label)
         func.place_label(skip_label)
+
+    func.throw_consts()
         
 
 def generate_function(tree):
@@ -1024,6 +1090,20 @@ def generate_program(tree, context):
             for v in start_func.aliased_registers:
                 if start_func.aliased_registers[v].startswith("G"):
                     global_register_aliases[v] = start_func.aliased_registers[v]
+
+        elif child.data == "StructDef":
+            current_struct = structdata.Struct(child.children[0].data)
+
+            for item in child.children[1:]:
+                if item.data == "Argument":
+                    var_type = item.children[0].data
+                    name = item.children[1].data
+
+                    current_struct.add_member(name, var_type)
+
+            current_struct.display_debug()
+
+            p.add_struct(child.children[0].data, current_struct)
 
     start_func.add_return()
     
