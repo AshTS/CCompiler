@@ -5,7 +5,7 @@ SW R15, R14
 JL R1, _start
 JL R1, main
 J __after
-~
+~ 58 3A 20 00 20 20 59 3A 20 00
 # void update_display()
 update_display:
 SUB R2, R2, 2
@@ -326,6 +326,44 @@ ADD R2, R2, 2
 J R1
 
 
+# int display_struct(struct Point p)
+display_struct:
+SUB R2, R2, 2
+SW R2, R1
+ADD R1, R0, 0
+ADD R13, R0, 0
+SUB R2, R2, 2
+SW R2, R3
+ADD R3, R0, 26
+JL R1, print
+RW R3, R2
+ADD R2, R2, 2
+ADD R4, R0, 0
+ADD R4, R3, 0
+RW R4, R4
+SUB R2, R2, 2
+SW R2, R3
+ADD R3, R0, R4
+JL R1, print_number
+RW R3, R2
+ADD R2, R2, 2
+SUB R2, R2, 2
+SW R2, R3
+ADD R3, R0, 30
+JL R1, print
+RW R3, R2
+ADD R2, R2, 2
+ADD R4, R0, 0
+ADD R4, R3, 4
+RW R4, R4
+ADD R3, R0, R4
+JL R1, print_number
+display_struct_ret:
+RW R1, R2
+ADD R2, R2, 2
+J R1
+
+
 # int main()
 main:
 SUB R2, R2, 2
@@ -335,35 +373,22 @@ ADD R13, R0, 0
 JL R1, clear_display
 ADD R3, R0, R13
 ADD R4, R0, 0
-main_L0:
-ADD R3, R0, 10
-ADD R5, R0, 0
-CL R5, R4, R3
-CE R15, R5, 0
-JF R15, main_L1
-SUB R2, R2, 2
-SW R2, R4
-ADD R3, R0, R4
-JL R1, print_number
-RW R4, R2
-ADD R2, R2, 2
-SUB R2, R2, 2
-SW R2, R4
-ADD R3, R0, 10
-JL R1, put_char
-RW R4, R2
-ADD R2, R2, 2
 ADD R3, R0, 0
-ADD R3, R4, 1
-ADD R4, R0, R3
-J main_L0
-main_L1:
-main_L2:
+ADD R3, R4, 0
+ADD R5, R0, 4
+SW R3, R5
+ADD R3, R0, 0
+ADD R3, R4, 4
+ADD R5, R0, 7
+SW R3, R5
+ADD R3, R0, R4
+JL R1, display_struct
+main_L0:
 ADD R3, R0, 1
 CE R15, R3, 0
-JF R15, main_L3
-J main_L2
-main_L3:
+JF R15, main_L1
+J main_L0
+main_L1:
 ADD R13, R0, 0
 main_ret:
 RW R1, R2

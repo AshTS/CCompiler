@@ -10,7 +10,7 @@ register_mapping = {"R0": "R13",
 "R9": "R11",
 "R10": "R12"}
 
-STRING_DATA_OFFSET = 16
+STRING_DATA_OFFSET = 26
 
 def jump(addr):
     return "J %s\n" % addr

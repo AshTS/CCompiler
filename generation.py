@@ -51,6 +51,8 @@ class Function:
         self.registers_for_consts = []
         self.registers_to_ignore = []
 
+        self.register_types = {}
+
         self.assigned_global = []
         self.free_global = []
         self.last_global = 0
@@ -253,6 +255,7 @@ class Function:
     def define_variable(self, var_name, var_type, is_arg=False):
         self.aliased_registers[var_name] = self.request_register(is_arg)
         self.register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type)
+        self.register_types[self.aliased_registers[var_name]] = var_type
 
         if var_type.endswith("*"):
             self.pointer_register_sizes[self.aliased_registers[var_name]] = utils.get_size_of_type(var_type[:-1])
@@ -382,6 +385,10 @@ def update_pointer_register_sizes(func, reg0, reg1):
 
     if reg1 in func.pointer_register_sizes:
         func.pointer_register_sizes[reg0] = func.pointer_register_sizes[reg1]
+
+
+def generate_alloc(func, reg, segment_size):
+    func.add_line("ALLOC", [reg, segment_size])
 
 
 def generate_expression(tree, func, left=False):
@@ -944,6 +951,34 @@ def generate_expression(tree, func, left=False):
 
         return new_reg
 
+    elif tree.data == "Member":
+        tree.display()
+
+        arg0 = func.aliased_registers[tree.children[0].data]
+
+        struct_type = func.register_types[arg0]
+        struct_data = func.program.struct_data[struct_type.split("struct ")[1]]
+
+        offset = struct_data.members[tree.children[1].data]
+
+        new_reg = func.request_register()
+
+        func.add_line("ADD", [new_reg, arg0, offset])
+
+        func.pointer_register_sizes[new_reg] = utils.get_size_of_type(struct_data.member_types[tree.children[1].data])
+
+        if left:
+            func.pointer_registers.append(new_reg)
+        else:
+            s = "W"
+            if new_reg in func.pointer_register_sizes:
+                s = defines.suffix_by_size[func.pointer_register_sizes[new_reg]]
+            func.add_line("R" + s, [new_reg, new_reg])
+
+        return new_reg
+
+        print(offset)
+
     # Possibly A Variable
 
     else:
@@ -979,7 +1014,14 @@ def generate_statement(tree, func):
 
             type_size = utils.get_size_of_type(var_type[:-1])
 
-            func.add_line("ALLOC", [reg, int(tree.children[3].children[0].children[0].data) * type_size])
+            generate_alloc(func, reg, int(tree.children[3].children[0].children[0].data) * type_size)
+
+        elif var_type.startswith("struct"):
+            reg = func.aliased_registers[var_name]
+
+            type_size = func.program.struct_data[var_type.split("struct ")[1]].current
+
+            generate_alloc(func, reg, type_size)
 
         elif len(tree.children) > 2:
             var_value = generate_expression(tree.children[2], func)
@@ -1056,13 +1098,16 @@ def generate_statement(tree, func):
     func.throw_consts()
         
 
-def generate_function(tree):
+def generate_function(tree, prog):
     arguments = []
+
 
     for c in tree.children[2:]:
         if c.data == "Argument":
             arguments.append([c.children[0].data, c.children[1].data])
     f = Function(tree.children[1].data, arguments, tree.children[0].data, None)
+
+    f.program = prog
 
     generate_statement(tree.children[-1], f)
 
@@ -1078,7 +1123,7 @@ def generate_program(tree, context):
 
     for child in tree.children:
         if child.data == "Function":
-            p.add_function(generate_function(child))
+            p.add_function(generate_function(child, p))
         elif child.data == "GlobalVariable":
             var_type = child.children[0].data
             var_name = child.children[1].data
