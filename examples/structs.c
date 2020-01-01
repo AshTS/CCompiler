@@ -1,4 +1,4 @@
-#include "display.h"
+#include "examples/display.h"
 
 struct Point
 {

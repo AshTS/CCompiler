@@ -1,27 +1,6 @@
-X   Enums
-X   Constant Types
-X   Floats
-    Unions
-X   Intermediate Representation
-X       Line and Program Classes
-X       Function Seperation
-X       Function Generation
-X       Variable Declarations
-X       etc.
-X   Optimization
-X   Generic ASM definition
-    Pseudo Linker
-X   Revamp Type Parser
-X   Type Checking in Parsing
-X   Add Position information to ParseNode's
-X   Array declarations
-X   Struct assignment
-X   Typedef Inligning in Parser
-X   Global Variables
-
-URGENT:
-    Fix Undefined Registers using Memory/Stack
-    Usage of Structs
-
-OPTIMZIATIONS:
-    Speed up path generation
+Future Updates:
+    Migrate to using the stack for variables
+    Implement global variables
+    Add Unions and Enums
+    Fix how variables are passed
+    Integrate an assembler
