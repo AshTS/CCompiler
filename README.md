@@ -105,3 +105,7 @@ Using this one can run a program compiled with the compiler using
 ```
 ./run file
 ```
+
+## Requirements
+
+Requires Python 3.7 or higher
