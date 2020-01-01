@@ -109,3 +109,28 @@ Using this one can run a program compiled with the compiler using
 ## Requirements
 
 Requires Python 3.7 or higher
+
+# How it Works
+
+This compiler begins with the pre-processor, tokenizes the input, parses it into a parse tree, converts the parse tree to an intermediate representation, optimizes that intermediate representation, and finally generates assembly code from that optimized intermediate representation.
+
+## Optimizer
+
+The optimizer is done with a loop which runs until no further optimizations can be made. It runs a number of operations, including:
+
+* Reduce Register Usage
+* Remove Empty Initalizations
+* Optimize Backing up Registers
+* Optimize Move Chaining
+* Remove Unused Writes
+* Remove Unreachable Code
+* Remove Unused Variables
+* Remove Jumps to next Instruction
+* Allow Reuse of Single Use Variables
+* Removing NOP Instructions
+
+Each of these operations makes the code slightly more efficent, and the culmination of all of them makes it reasonably efficent.
+
+## Intermediate Representation
+
+The intermediate representation is a generalized assembly langauge to allow the compiler to not need to concern itself with the specifics of the assembly language it targets.
